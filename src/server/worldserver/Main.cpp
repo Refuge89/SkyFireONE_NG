@@ -17,20 +17,16 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// \addtogroup Trinityd Skyfire Daemon
-/// @{
-/// \file
-
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-#include <ace/Version.h>
-
 #include "Common.h"
 #include "DatabaseEnv.h"
 #include "Config.h"
 
 #include "Log.h"
 #include "Master.h"
+
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <ace/Version.h>
 
 #ifndef _SKYFIRE_CORE_CONFIG
 # define _SKYFIRE_CORE_CONFIG  "worldserver.conf"

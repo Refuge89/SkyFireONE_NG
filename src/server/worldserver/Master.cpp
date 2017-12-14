@@ -17,10 +17,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
-    \ingroup Trinityd
-*/
-
 #include "Common.h"
 #include "SystemConfig.h"
 #include "SignalHandler.h"
@@ -37,7 +33,7 @@
 #include "TCSoap.h"
 #include "Timer.h"
 #include "Util.h"
-#include "AuthSocket.h"
+#include "RealmList.h"
 #include "BigNumber.h"
 
 #include <ace/Sig_Handler.h>
@@ -160,7 +156,7 @@ int Master::Run()
         return 1;
 
     // set server offline (not connectable)
-    LoginDatabase.DirectPExecute("UPDATE realmlist SET color = (color & ~%u) | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, REALM_FLAG_INVALID, realmID);
+    LoginDatabase.DirectPExecute("UPDATE realmlist SET flag = (flag & ~%u) | %u WHERE id = '%d'", REALM_FLAG_OFFLINE, REALM_FLAG_INVALID, realmID);
 
     ///- Initialize the World
     sWorld->SetInitialWorldSettings();

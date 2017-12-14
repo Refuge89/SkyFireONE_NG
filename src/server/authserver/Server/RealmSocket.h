@@ -20,6 +20,8 @@
 #ifndef __REALMSOCKET_H__
 #define __REALMSOCKET_H__
 
+#include "Define.h"
+
 #include <ace/Synch_Traits.h>
 #include <ace/Svc_Handler.h>
 #include <ace/SOCK_Stream.h>
@@ -55,7 +57,7 @@ public:
 
     const std::string& getRemoteAddress(void) const;
 
-    const uint16 getRemotePort(void) const;
+    uint16 getRemotePort(void) const;
 
     virtual int open(void *);
 

@@ -17,10 +17,6 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
-    \ingroup Trinityd
-*/
-
 #include "Common.h"
 #include "ObjectAccessor.h"
 #include "World.h"

@@ -27,6 +27,7 @@
 #include "AuthCodes.h"
 #include "SHA1.h"
 
+#include <algorithm>
 #include <openssl/crypto.h>
 #include <openssl/md5.h>
 
@@ -361,7 +362,7 @@ bool AuthSocket::_HandleLogonChallenge()
     if (result)
     {
         pkt << (uint8)WOW_FAIL_BANNED;
-        sLog->outBasic("[AuthChallenge] Banned ip %s tried to login!", address.c_str());
+        sLog->outBasic("'%s:%d' [AuthChallenge] Banned ip tried to login!", address.c_str());
     }
     else
     {
@@ -420,11 +421,11 @@ bool AuthSocket::_HandleLogonChallenge()
                 else
                 {
                     // Get the password from the account table, upper it, and make the SRP6 calculation
-                    std::string rI = (*result)[0].GetCppString();
+                    std::string rI = (*result)[0].GetString();
 
                     // Don't calculate (v, s) if there are already some in the database
-                    std::string databaseV = (*result)[5].GetCppString();
-                    std::string databaseS = (*result)[6].GetCppString();
+                    std::string databaseV = (*result)[5].GetString();
+                    std::string databaseS = (*result)[6].GetString();
 
                     sLog->outDebug("database authentication values: v='%s' s='%s'", databaseV.c_str(), databaseS.c_str());
 
@@ -660,20 +661,17 @@ bool AuthSocket::_HandleLogonProof()
                     if (WrongPassBanType)
                     {
                         uint32 acc_id = (*loginfail)[0].GetUInt32();
-                        LoginDatabase.PExecute("INSERT INTO account_banned VALUES ('%u',UNIX_TIMESTAMP(),UNIX_TIMESTAMP()+'%u','Skyfire realmd','Failed login autoban',1)",
-                            acc_id, WrongPassBanTime);
+                        LoginDatabase.PExecute("INSERT INTO account_banned VALUES ('%u',UNIX_TIMESTAMP(),UNIX_TIMESTAMP()+'%u','Skyfire realmd','Failed login autoban',1)", acc_id, WrongPassBanTime);
 
-                        sLog->outBasic("[AuthChallenge] account %s got banned for '%u' seconds because it failed to authenticate '%u' times",
-                            _login.c_str(), WrongPassBanTime, failed_logins);
+                        sLog->outBasic("'%s:%d' [AuthChallenge] account %s got banned for '%u' seconds because it failed to authenticate '%u' times", _login.c_str(), WrongPassBanTime, failed_logins);
                     }
                     else
                     {
                         std::string current_ip(socket().getRemoteAddress().c_str());
                         LoginDatabase.EscapeString(current_ip);
-                        LoginDatabase.PExecute("INSERT INTO ip_banned VALUES ('%s',UNIX_TIMESTAMP(),UNIX_TIMESTAMP()+'%u','Skyfire realmd','Failed login autoban')",
-                            current_ip.c_str(), WrongPassBanTime);
-
-                        sLog->outBasic("[AuthChallenge] IP %s got banned for '%u' seconds because account %s failed to authenticate '%u' times", socket().getRemoteAddress().c_str(), WrongPassBanTime, _login.c_str(), failed_logins);
+                        LoginDatabase.PExecute("INSERT INTO ip_banned VALUES ('%s',UNIX_TIMESTAMP(),UNIX_TIMESTAMP()+'%u','Skyfire realmd','Failed login autoban')", current_ip.c_str(), WrongPassBanTime);
+                        
+                        sLog->outBasic("'%s:%d' [AuthChallenge] IP %s got banned for '%u' seconds because it failed to authenticate '%u' times", _login.c_str(), WrongPassBanTime, failed_logins);
                     }
                 }
             }
@@ -743,7 +741,7 @@ bool AuthSocket::_HandleReconnectChallenge()
     uint8 secLevel = fields[2].GetUInt8();
     _accountSecurityLevel = secLevel <= SEC_ADMINISTRATOR ? AccountTypes(secLevel) : SEC_ADMINISTRATOR;
 
-    K.SetHexStr (fields[0].GetString ());
+    K.SetHexStr ((*result)[0].GetString());
 
     // Sending response
     ByteBuffer pkt;
@@ -854,7 +852,7 @@ bool AuthSocket::_HandleRealmList()
         pkt << i->second.icon;                                       // realm type
         if (_expversion & (POST_BC_EXP_FLAG | POST_WOTLK_EXP_FLAG))  // 2.x, 3.x, and 4.x clients
             pkt << lock;                                             // if 1, then realm locked
-        pkt << i->second.color;                                      // if 2, then realm is offline
+        pkt << uint8(i->second.flag);                                // RealmFlags
         pkt << i->first;
         pkt << i->second.address;
         pkt << i->second.populationLevel;
