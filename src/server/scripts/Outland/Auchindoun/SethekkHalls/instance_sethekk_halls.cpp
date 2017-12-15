@@ -107,7 +107,7 @@ struct instance_sethekk_halls : public ScriptedInstance
             }
         }
 
-        sLog->outDebug("TSCR: Instance Sethekk Halls: GetPlayerInMap, but PlayerList is empty!");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Sethekk Halls: GetPlayerInMap, but PlayerList is empty!");
         return NULL;
     }
 

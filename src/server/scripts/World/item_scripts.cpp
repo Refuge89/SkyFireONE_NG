@@ -214,7 +214,7 @@ bool ItemUse_item_flying_machine(Player* player, Item* pItem, SpellCastTargets c
         if (player->GetBaseSkillValue(SKILL_RIDING) == 300)
             return false;
 
-    sLog->outDebug("TSCR: Player attempt to use item %u, but did not meet riding requirement",itemId);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Player attempt to use item %u, but did not meet riding requirement",itemId);
     player->SendEquipError(EQUIP_ERR_ERR_CANT_EQUIP_SKILL, pItem, NULL);
     return true;
 }

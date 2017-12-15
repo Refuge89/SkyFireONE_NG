@@ -270,7 +270,7 @@ struct npc_barnesAI : public npc_escortAI
 
     void PrepareEncounter()
     {
-        sLog->outDebug("TSCR: Barnes Opera Event - Introduction complete - preparing encounter %d", m_uiEventId);
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Barnes Opera Event - Introduction complete - preparing encounter %d", m_uiEventId);
         uint8 index = 0;
         uint8 count = 0;
 

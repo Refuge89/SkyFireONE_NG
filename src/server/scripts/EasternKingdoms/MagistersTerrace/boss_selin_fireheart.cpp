@@ -67,7 +67,7 @@ struct boss_selin_fireheartAI : public ScriptedAI
             for (uint8 i = 0; i < size; ++i)
             {
                 uint64 guid = instance->GetData64(DATA_FEL_CRYSTAL);
-                sLog->outDebug("TSCR: Selin: Adding Fel Crystal %u to list", guid);
+                sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Selin: Adding Fel Crystal %u to list", guid);
                 Crystals.push_back(guid);
             }
         }

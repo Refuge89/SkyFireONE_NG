@@ -562,7 +562,7 @@ void hyjalAI::SummonNextWave(Wave wave[18], uint32 Count, float Base[4][3])
         else
         {
             NextWaveTimer = 15000;
-            sLog->outDebug("TSCR: HyjalAI: debug mode is enabled. Next Wave in 15 seconds");
+            sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: HyjalAI: debug mode is enabled. Next Wave in 15 seconds");
         }
     }
     else
@@ -659,7 +659,7 @@ void hyjalAI::UpdateWorldState(uint32 id, uint32 state)
                 if (Player* player = itr->getSource())
                     player->SendUpdateWorldState(id, state);
             }
-    } else sLog->outDebug("TSCR: HyjalAI: UpdateWorldState, but PlayerList is empty");
+    } else sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: HyjalAI: UpdateWorldState, but PlayerList is empty");
 }
 
 void hyjalAI::Retreat()

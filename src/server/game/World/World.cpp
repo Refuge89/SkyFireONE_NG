@@ -1429,7 +1429,7 @@ void World::SetInitialWorldSettings()
     sScriptMgr->ScriptsInit();
 
     // Initialize game time and timers
-    sLog->outDebug("DEBUG:: Initialize game time and timers");
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "DEBUG:: Initialize game time and timers");
     m_gameTime = time(NULL);
     m_startTime=m_gameTime;
 
@@ -1468,7 +1468,7 @@ void World::SetInitialWorldSettings()
     mail_timer = ((((localtime(&m_gameTime)->tm_hour + 20) % 24)* HOUR * IN_MILLISECONDS) / m_timers[WUPDATE_AUCTIONS].GetInterval());
                                                             //1440
     mail_timer_expires = ((DAY * IN_MILLISECONDS) / (m_timers[WUPDATE_AUCTIONS].GetInterval()));
-    sLog->outDebug("Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
 
     // Initialize static helper structures
     AIRegistry::Initialize();
@@ -2211,7 +2211,7 @@ void World::ShutdownCancel()
     m_ExitCode = SHUTDOWN_EXIT_CODE;                       // to default value
     SendServerMessage(msgid);
 
-    sLog->outDebug("Server %s canceled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shutdown"));
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "Server %s canceled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shutdown"));
 }
 
 // Send a server message to the user(s)
@@ -2262,7 +2262,7 @@ void World::ProcessCliCommands()
     CliCommandHolder* command;
     while (cliCmdQueue.next(command))
     {
-        sLog->outDebug("CLI command under processing...");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "CLI command under processing...");
         zprint = command->m_print;
         callbackArg = command->m_callbackArg;
         CliHandler handler(callbackArg, zprint);
@@ -2382,7 +2382,7 @@ void World::UpdateAllowedSecurity()
      if (result)
      {
         m_allowedSecurityLevel = AccountTypes(result->Fetch()->GetUInt16());
-        sLog->outDebug("Allowed Level: %u Result %u", m_allowedSecurityLevel, result->Fetch()->GetUInt16());
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "Allowed Level: %u Result %u", m_allowedSecurityLevel, result->Fetch()->GetUInt16());
      }
 }
 

@@ -217,7 +217,7 @@ struct npc_grimstoneAI : public npc_escortAI
             if (instance)
             {
                 instance->SetData(TYPE_RING_OF_LAW, DONE);
-                sLog->outDebug("TSCR: npc_grimstone: event reached end and set complete.");
+                sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: npc_grimstone: event reached end and set complete.");
             }
             break;
         }
