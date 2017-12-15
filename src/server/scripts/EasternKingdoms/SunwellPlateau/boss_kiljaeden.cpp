@@ -1343,7 +1343,7 @@ struct mob_sinster_reflectionAI : public ScriptedAI
                 DoMeleeAttackIfReady();
                 break;
             }
-            sLog->outDebug("Sinister-Timer");
+            sLog->outDebug (LOG_FILTER_NETWORKIO, "Sinister-Timer");
             for (uint8 i = 0; i < 3; ++i)
                 uiTimer[i] -= diff;
         }

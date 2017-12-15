@@ -93,7 +93,7 @@ struct instance_shadow_labyrinth : public ScriptedInstance
                 if (creature->isAlive())
                 {
                     ++FelOverseerCount;
-                    sLog->outDebug("TSCR: Shadow Labyrinth: counting %u Fel Overseers.",FelOverseerCount);
+                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Shadow Labyrinth: counting %u Fel Overseers.",FelOverseerCount);
                 }
                 break;
         }
@@ -112,7 +112,7 @@ struct instance_shadow_labyrinth : public ScriptedInstance
             }
         }
 
-        sLog->outDebug("TSCR: Instance Shadow Labyrinth: GetPlayerInMap, but PlayerList is empty!");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Shadow Labyrinth: GetPlayerInMap, but PlayerList is empty!");
         return NULL;
     }
 
@@ -130,12 +130,12 @@ struct instance_shadow_labyrinth : public ScriptedInstance
                 if (FelOverseerCount)
                 {
                     --FelOverseerCount;
-                    sLog->outDebug("TSCR: Shadow Labyrinth: %u Fel Overseers left to kill.",FelOverseerCount);
+                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Shadow Labyrinth: %u Fel Overseers left to kill.",FelOverseerCount);
                 }
                 if (FelOverseerCount == 0)
                 {
                     Encounter[1] = DONE;
-                    sLog->outDebug("TSCR: Shadow Labyrinth: TYPE_OVERSEER == DONE");
+                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Shadow Labyrinth: TYPE_OVERSEER == DONE");
                 }
                 break;
 

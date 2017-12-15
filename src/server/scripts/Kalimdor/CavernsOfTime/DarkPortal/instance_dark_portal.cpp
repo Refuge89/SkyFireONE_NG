@@ -112,7 +112,7 @@ struct instance_dark_portal : public ScriptedInstance
             }
         }
 
-        sLog->outDebug("TSCR: Instance Black Portal: GetPlayerInMap, but PlayerList is empty!");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Black Portal: GetPlayerInMap, but PlayerList is empty!");
         return NULL;
     }
 
@@ -127,7 +127,7 @@ struct instance_dark_portal : public ScriptedInstance
                 if (Player* player = itr->getSource())
                     player->SendUpdateWorldState(id, state);
             }
-        } else sLog->outDebug("TSCR: Instance Black Portal: UpdateBMWorldState, but PlayerList is empty!");
+        } else sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Black Portal: UpdateBMWorldState, but PlayerList is empty!");
     }
 
     void InitWorldState(bool Enable = true)
@@ -191,7 +191,7 @@ struct instance_dark_portal : public ScriptedInstance
 
         if (!player)
         {
-            sLog->outDebug("TSCR: Instance Black Portal: SetData (Type: %u Data %u) cannot find any player.", type, data);
+            sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Black Portal: SetData (Type: %u Data %u) cannot find any player.", type, data);
             return;
         }
 
@@ -220,7 +220,7 @@ struct instance_dark_portal : public ScriptedInstance
             {
                 if (data == IN_PROGRESS)
                 {
-                    sLog->outDebug("TSCR: Instance Dark Portal: Starting event.");
+                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Dark Portal: Starting event.");
                     InitWorldState();
                     Encounter[1] = IN_PROGRESS;
                     NextPortal_Timer = 15000;
@@ -282,7 +282,7 @@ struct instance_dark_portal : public ScriptedInstance
         if (entry == RIFT_BOSS)
             entry = RandRiftBoss();
 
-        sLog->outDebug("TSCR: Instance Dark Portal: Summoning rift boss entry %u.",entry);
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Dark Portal: Summoning rift boss entry %u.",entry);
 
         Position pos;
         source->GetRandomNearPosition(pos, 10.0f);
@@ -293,7 +293,7 @@ struct instance_dark_portal : public ScriptedInstance
         if (Unit *summon = source->SummonCreature(entry, pos, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 600000))
             return summon;
 
-        sLog->outDebug("TSCR: Instance Dark Portal: what just happened there? No boss, no loot, no fun...");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Dark Portal: what just happened there? No boss, no loot, no fun...");
         return NULL;
     }
 
@@ -310,7 +310,7 @@ struct instance_dark_portal : public ScriptedInstance
                 int tmp = rand()%4;
                 if (tmp != CurrentRiftId)
                 {
-                    sLog->outDebug("TSCR: Instance Dark Portal: Creating Time Rift at locationId %i (old locationId was %u).",tmp, CurrentRiftId);
+                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Dark Portal: Creating Time Rift at locationId %i (old locationId was %u).",tmp, CurrentRiftId);
 
                     CurrentRiftId = tmp;
 

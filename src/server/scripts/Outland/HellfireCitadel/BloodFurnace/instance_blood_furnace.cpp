@@ -146,7 +146,7 @@ struct instance_blood_furnace : public ScriptedInstance
             }
         }
 
-        sLog->outDebug("TSCR: Instance Blood Furnace: GetPlayerInMap, but PlayerList is empty!");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Blood Furnace: GetPlayerInMap, but PlayerList is empty!");
         return NULL;
     }
 

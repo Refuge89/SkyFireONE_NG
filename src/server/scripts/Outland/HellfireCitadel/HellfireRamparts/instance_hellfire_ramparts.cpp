@@ -68,7 +68,7 @@ struct instance_ramparts : public ScriptedInstance
             }
         }
 
-        sLog->outDebug("TSCR: Instance Hellfire Ramparts: GetPlayerInMap, but PlayerList is empty!");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Instance Hellfire Ramparts: GetPlayerInMap, but PlayerList is empty!");
         return NULL;
     }
 

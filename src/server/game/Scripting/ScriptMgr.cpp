@@ -107,7 +107,7 @@ void DoScriptText(int32 iTextEntry, WorldObject* pSource, Unit* pTarget)
         return;
     }
 
-    sLog->outDebug("TSCR: DoScriptText: text entry=%i, Sound=%u, Type=%u, Language=%u, Emote=%u", iTextEntry, pData->uiSoundId, pData->uiType, pData->uiLanguage, pData->uiEmote);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: DoScriptText: text entry=%i, Sound=%u, Type=%u, Language=%u, Emote=%u", iTextEntry, pData->uiSoundId, pData->uiType, pData->uiLanguage, pData->uiEmote);
 
     if (pData->uiSoundId)
     {
@@ -256,7 +256,7 @@ bool ScriptMgr::GossipHello (Player * player, Creature* creature)
 
 bool ScriptMgr::GossipSelect(Player* player, Creature* creature, uint32 uiSender, uint32 uiAction)
 {
-    sLog->outDebug("TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
 
     Script *tmpscript = m_scripts[creature->GetScriptId()];
     if (!tmpscript || !tmpscript->pGossipSelect) return false;
@@ -267,7 +267,7 @@ bool ScriptMgr::GossipSelect(Player* player, Creature* creature, uint32 uiSender
 
 bool ScriptMgr::GossipSelectWithCode(Player* player, Creature* creature, uint32 uiSender, uint32 uiAction, const char* sCode)
 {
-    sLog->outDebug("TSCR: Gossip selection with code, sender: %d, action: %d", uiSender, uiAction);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Gossip selection with code, sender: %d, action: %d", uiSender, uiAction);
 
     Script *tmpscript = m_scripts[creature->GetScriptId()];
     if (!tmpscript || !tmpscript->pGossipSelectWithCode) return false;
@@ -280,7 +280,7 @@ bool ScriptMgr::GOSelect(Player* player, GameObject* pGO, uint32 uiSender, uint3
 {
     if (!pGO)
     return false;
-    sLog->outDebug("TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
 
     Script *tmpscript = m_scripts[pGO->GetGOInfo()->ScriptId];
     if (!tmpscript || !tmpscript->pGOSelect) return false;
@@ -293,7 +293,7 @@ bool ScriptMgr::GOSelectWithCode(Player* player, GameObject* pGO, uint32 uiSende
 {
     if (!pGO)
     return false;
-    sLog->outDebug("TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
+    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: Gossip selection, sender: %d, action: %d", uiSender, uiAction);
 
     Script *tmpscript = m_scripts[pGO->GetGOInfo()->ScriptId];
     if (!tmpscript || !tmpscript->pGOSelectWithCode) return false;

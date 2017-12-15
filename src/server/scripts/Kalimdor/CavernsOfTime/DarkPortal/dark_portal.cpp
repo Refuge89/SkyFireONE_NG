@@ -303,7 +303,7 @@ struct npc_time_riftAI : public ScriptedAI
             mRiftWaveCount = 0;
 
         entry = PortalWaves[mWaveId].PortalMob[mRiftWaveCount];
-        sLog->outDebug("TSCR: npc_time_rift: summoning wave creature (Wave %u, Entry %u).",mRiftWaveCount, entry);
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: npc_time_rift: summoning wave creature (Wave %u, Entry %u).",mRiftWaveCount, entry);
 
         ++mRiftWaveCount;
 
@@ -328,7 +328,7 @@ struct npc_time_riftAI : public ScriptedAI
         if (me->IsNonMeleeSpellCasted(false))
             return;
 
-        sLog->outDebug("TSCR: npc_time_rift: not casting anylonger, i need to die.");
+        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: npc_time_rift: not casting anylonger, i need to die.");
         me->setDeathState(JUST_DIED);
 
         instance->SetData(TYPE_RIFT, SPECIAL);

@@ -242,7 +242,7 @@ bool EquippedOk(Player* player, uint32 spellId)
                 if (pItem->GetProto()->RequiredSpell == reqSpell)
             {
                 //player has item equipped that require specialty. Not allow to unlearn, player has to unequip first
-                sLog->outDebug("TSCR: player attempt to unlearn spell %u, but item %u is equipped.",reqSpell, pItem->GetProto()->ItemId);
+                sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: player attempt to unlearn spell %u, but item %u is equipped.",reqSpell, pItem->GetProto()->ItemId);
                 return false;
             }
         }
