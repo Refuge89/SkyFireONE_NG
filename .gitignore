@@ -5,9 +5,16 @@ x64*/
 .mailmap
 *.orig
 *.rej
+[Bb]in
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
 *~
 .hg/
 *.kdev*
+.DS_Store
+CMakeLists.txt.user
 *.bak
 *.patch
 *.diff
