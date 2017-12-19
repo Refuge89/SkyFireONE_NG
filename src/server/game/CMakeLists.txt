@@ -1,5 +1,5 @@
-# Copyright (C) 2010-2012 Project SkyFire <http://www.projectskyfire.org/>
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2010-2017 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -13,7 +13,6 @@ if ( USE_COREPCH )
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-file(GLOB_RECURSE sources_PrecompiledHeaders PrecompiledHeaders/*.cpp PrecompiledHeaders/*.h)
 file(GLOB_RECURSE sources_Accounts Accounts/*.cpp Accounts/*.h)
 file(GLOB_RECURSE sources_Addons Addons/*.cpp Addons/*.h)
 file(GLOB_RECURSE sources_AI AI/*.cpp AI/*.h)
@@ -37,6 +36,7 @@ file(GLOB_RECURSE sources_Miscellaneous Miscellaneous/*.cpp Miscellaneous/*.h)
 file(GLOB_RECURSE sources_Movement Movement/*.cpp Movement/*.h)
 file(GLOB_RECURSE sources_OutdoorPvP OutdoorPvP/*.cpp OutdoorPvP/*.h)
 file(GLOB_RECURSE sources_Pools Pools/*.cpp Pools/*.h)
+file(GLOB_RECURSE sources_PrecompiledHeaders PrecompiledHeaders/*.cpp PrecompiledHeaders/*.h)
 file(GLOB_RECURSE sources_Quests Quests/*.cpp Quests/*.h)
 file(GLOB_RECURSE sources_Reputation Reputation/*.cpp Reputation/*.h)
 file(GLOB_RECURSE sources_Scripting Scripting/*.cpp Scripting/*.h)
@@ -50,7 +50,6 @@ file(GLOB_RECURSE sources_Weather Weather/*.cpp Weather/*.h)
 file(GLOB_RECURSE sources_World World/*.cpp World/*.h)
 
 source_group(CMake FILES CMakeLists.txt)
-source_group(PrecompiledHeaders FILES ${sources_PrecompiledHeaders})
 source_group(Accounts FILES ${sources_Accounts})
 source_group(Addons FILES ${sources_Addons})
 source_group(AI FILES ${sources_AI})
@@ -59,14 +58,15 @@ source_group(AuctionHouse FILES ${sources_AuctionHouse})
 source_group(Battlegrounds FILES ${sources_Battlegrounds})
 source_group(Chat FILES ${sources_Chat})
 source_group(Combat FILES ${sources_Combat})
+#source_group(Conditions FILES ${sources_Conditions})  // --NYI
 source_group(DataStores FILES ${sources_DataStores})
 source_group(Entities FILES ${sources_Entities})
 source_group(Events FILES ${sources_Events})
-source_group(Handlers FILES ${sources_Handlers})
 source_group(Globals FILES ${sources_Globals})
 source_group(Grids FILES ${sources_Grids})
 source_group(Groups FILES ${sources_Groups})
 source_group(Guilds FILES ${sources_Guilds})
+source_group(Handlers FILES ${sources_Handlers})
 source_group(Instances FILES ${sources_Instances})
 source_group(Loot FILES ${sources_Loot})
 source_group(Mails FILES ${sources_Mails})
@@ -75,6 +75,7 @@ source_group(Miscellaneous FILES ${sources_Miscellaneous})
 source_group(Movement FILES ${sources_Movement})
 source_group(OutdoorPvP FILES ${sources_OutdoorPvP})
 source_group(Pools FILES ${sources_Pools})
+source_group(PrecompiledHeaders FILES ${sources_PrecompiledHeaders})
 source_group(Quests FILES ${sources_Quests})
 source_group(Reputation FILES ${sources_Reputation})
 source_group(Scripting FILES ${sources_Scripting})
@@ -89,7 +90,7 @@ source_group(World FILES ${sources_World})
 
 # Create game-libary
 
-if (USE_COREPCH AND MSVC)
+if( USE_COREPCH AND MSVC )
   set(game_STAT_SRCS
     PrecompiledHeaders/gamePCH.cpp
     PrecompiledHeaders/gamePCH.h
@@ -105,6 +106,7 @@ set(game_STAT_SRCS
   ${sources_Battlegrounds}
   ${sources_Chat}
   ${sources_Combat}
+#  ${sources_Conditions}
   ${sources_DataStores}
   ${sources_Entities}
   ${sources_Events}
@@ -137,18 +139,22 @@ set(game_STAT_SRCS
 
 include_directories(
   ${CMAKE_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/dep/mersennetwister
+  ${CMAKE_SOURCE_DIR}/dep/g3dlite/include
   ${CMAKE_SOURCE_DIR}/dep/SFMT
   ${CMAKE_SOURCE_DIR}/dep/zlib
+#  ${CMAKE_SOURCE_DIR}/dep/recastlite/Detour  -- NYI
+#  ${CMAKE_SOURCE_DIR}/dep/recastlite/Recast  -- NYI
   ${CMAKE_SOURCE_DIR}/src/server/collision
   ${CMAKE_SOURCE_DIR}/src/server/collision/Management
   ${CMAKE_SOURCE_DIR}/src/server/collision/Models
   ${CMAKE_SOURCE_DIR}/src/server/collision/Maps
+#  ${CMAKE_SOURCE_DIR}/src/server/collision/Pathfinding  -- NYI
   ${CMAKE_SOURCE_DIR}/src/server/shared
   ${CMAKE_SOURCE_DIR}/src/server/shared/Configuration
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography/Authentication
   ${CMAKE_SOURCE_DIR}/src/server/shared/Database
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Database/Implementation  
   ${CMAKE_SOURCE_DIR}/src/server/shared/DataStores
   ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging
   ${CMAKE_SOURCE_DIR}/src/server/shared/Dynamic/LinkedReference
@@ -157,6 +163,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/shared/Packets
   ${CMAKE_SOURCE_DIR}/src/server/shared/Threading
   ${CMAKE_SOURCE_DIR}/src/server/shared/Utilities
+  ${CMAKE_SOURCE_DIR}/src/server/game/Movement
+#  ${CMAKE_SOURCE_DIR}/src/server/game/Movement/Spline  -- NYI
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/Accounts
   ${CMAKE_CURRENT_SOURCE_DIR}/Addons
@@ -172,7 +180,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Chat/Channels
   ${CMAKE_CURRENT_SOURCE_DIR}/Chat/Commands
   ${CMAKE_CURRENT_SOURCE_DIR}/Combat
-#  ${CMAKE_CURRENT_SOURCE_DIR}/Conditions       		-- NYI
+#  ${CMAKE_CURRENT_SOURCE_DIR}/Conditions           -- NYI
   ${CMAKE_CURRENT_SOURCE_DIR}/DataStores
 #  ${CMAKE_CURRENT_SOURCE_DIR}/DungeonFinding       -- NYI
   ${CMAKE_CURRENT_SOURCE_DIR}/Entities
@@ -204,6 +212,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Miscellaneous
   ${CMAKE_CURRENT_SOURCE_DIR}/Movement
   ${CMAKE_CURRENT_SOURCE_DIR}/Movement/MovementGenerators
+#  ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Spline         -- NYI  
   ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Waypoints
   ${CMAKE_CURRENT_SOURCE_DIR}/OutdoorPvP
   ${CMAKE_CURRENT_SOURCE_DIR}/OutdoorPvP/Zones
@@ -247,6 +256,7 @@ if( USE_COREPCH )
   if(CMAKE_COMPILER_IS_GNUCXX)
     add_precompiled_header(game ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/gamePCH.h)
   elseif(MSVC)
+  
     add_native_precompiled_header(game ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/gamePCH)
   endif()
 endif()

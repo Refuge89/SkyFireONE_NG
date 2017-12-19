@@ -1,5 +1,5 @@
-# Copyright (C) 2010-2012 Project SkyFire <http://www.projectskyfire.org/>
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -20,7 +20,7 @@ if( USE_COREPCH )
   include_directories(${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-if ( USE_COREPCH AND MSVC )
+if( USE_COREPCH AND MSVC )
   set(authserver_SRCS
     PrecompiledHeaders/authPCH.cpp
     PrecompiledHeaders/authPCH.h
@@ -36,24 +36,31 @@ set(authserver_SRCS
 )
 
 if( WIN32 )
-set(authserver_SRCS
-    ${authserver_SRCS}
-    ${sources_Debugging}
-    authserver.rc
-)
+	if( MSVC )
+		set(authserver_SRCS
+			${authserver_SRCS}
+			${sources_Debugging}
+		authserver.rc
+	)
+	else()
+		set(authserver_SRCS
+			${authserver_SRCS}
+			${sources_Debugging}
+	)
+	endif ()
 endif()
 
 include_directories(
   ${CMAKE_BINARY_DIR}
   ${CMAKE_SOURCE_DIR}/src/server/shared
-  ${CMAKE_SOURCE_DIR}/src/server/shared/Database
-  ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging
-  ${CMAKE_SOURCE_DIR}/src/server/shared/Packets
   ${CMAKE_SOURCE_DIR}/src/server/shared/Configuration
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography/Authentication
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Database
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Dynamic
   ${CMAKE_SOURCE_DIR}/src/server/shared/Logging
-  ${CMAKE_SOURCE_DIR}/src/server/shared/Dynamic  
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Packets
   ${CMAKE_SOURCE_DIR}/src/server/shared/Threading
   ${CMAKE_SOURCE_DIR}/src/server/shared/Utilities
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -74,7 +81,9 @@ add_executable(authserver
 add_dependencies(authserver revision.h)
 
 if( NOT WIN32 )
-  add_definitions(-D_AUTHSERVER_CONFIG='"${CONF_DIR}/authserver.conf"')
+	set_target_properties(authserver PROPERTIES
+		COMPILE_DEFINITIONS _SKYFIRE_REALM_CONFIG="${CONF_DIR}/authserver.conf"
+)
 endif()
 
 if( UNIX )
@@ -92,19 +101,28 @@ target_link_libraries(authserver
   ${MYSQL_LIBRARY}
   ${OPENSSL_LIBRARIES}
   ${OPENSSL_EXTRA_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${ACE_LIBRARY}
   ${OSX_LIBS}
 )
 
 if( WIN32 )
-  add_custom_command(TARGET authserver
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/authserver.conf.dist ${CMAKE_BINARY_DIR}/bin/$(ConfigurationName)/
-  )
+	if( MSVC )
+    add_custom_command(TARGET authserver
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/authserver.conf.dist ${CMAKE_BINARY_DIR}/bin/$(ConfigurationName)/
+    )
+	elseif ( MINGW )
+    add_custom_command(TARGET authserver
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/authserver.conf.dist ${CMAKE_BINARY_DIR}/bin/
+    )
+	endif()
 endif()
 
 if( UNIX )
   install(TARGETS authserver DESTINATION bin)
-  install(FILES  authserver.conf.dist DESTINATION etc)
+  install(FILES  authserver.conf.dist DESTINATION ${CONF_DIR})
 elseif( WIN32 )
   install(TARGETS authserver DESTINATION "${CMAKE_INSTALL_PREFIX}")
   install(FILES authserver.conf.dist DESTINATION "${CMAKE_INSTALL_PREFIX}")
@@ -112,7 +130,7 @@ endif()
 
 # Generate precompiled header
 if( USE_COREPCH )
-  if(CMAKE_COMPILER_IS_GNUCXX)
+  if( CMAKE_COMPILER_IS_GNUCXX )
     add_precompiled_header(authserver ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/authPCH.h)
   elseif(MSVC)
     add_native_precompiled_header(authserver ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders/authPCH)
