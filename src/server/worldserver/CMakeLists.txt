@@ -1,5 +1,5 @@
-# Copyright (C) 2011-2012 Project SkyFire <http://www.projectskyfire.org/>
-# Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -36,11 +36,18 @@ set(worldserver_SRCS
 )
 
 if( WIN32 )
-  set(worldserver_SRCS
-    ${worldserver_SRCS}
-    ${sources_Debugging}
-    worldserver.rc
-  )
+    if( MSVC )
+    set(worldserver_SRCS
+        ${worldserver_SRCS}
+        ${sources_Debugging}
+        worldserver.rc
+    )
+    else()
+    set(worldserver_SRCS
+        ${worldserver_SRCS}
+        ${sources_Debugging}
+    )
+    endif()
 endif()
 
 include_directories(
@@ -49,6 +56,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/dep/gsoap
   ${CMAKE_SOURCE_DIR}/dep/sockets/include
   ${CMAKE_SOURCE_DIR}/dep/SFMT
+#  ${CMAKE_SOURCE_DIR}/dep/recastlite/Detour    --NYI
+#  ${CMAKE_SOURCE_DIR}/dep/recastlite/Recast    --NYI  
   ${CMAKE_SOURCE_DIR}/src/server/collision
   ${CMAKE_SOURCE_DIR}/src/server/collision/Management
   ${CMAKE_SOURCE_DIR}/src/server/collision/Models
@@ -57,6 +66,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography
   ${CMAKE_SOURCE_DIR}/src/server/shared/Cryptography/Authentication
   ${CMAKE_SOURCE_DIR}/src/server/shared/Database
+  ${CMAKE_SOURCE_DIR}/src/server/shared/Database/Implementation
   ${CMAKE_SOURCE_DIR}/src/server/shared/DataStores
   ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging
   ${CMAKE_SOURCE_DIR}/src/server/shared/Dynamic/LinkedReference
@@ -70,7 +80,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/Addons
   ${CMAKE_SOURCE_DIR}/src/server/game/AI
   ${CMAKE_SOURCE_DIR}/src/server/game/AI/CoreAI
-  ${CMAKE_SOURCE_DIR}/src/server/game/AI/EventAI
   ${CMAKE_SOURCE_DIR}/src/server/game/AI/EventAI
   ${CMAKE_SOURCE_DIR}/src/server/game/AI/ScriptedAI
 #  ${CMAKE_SOURCE_DIR}/src/server/game/AI/SmartScripts    -- NYI
@@ -113,6 +122,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement/MovementGenerators
   ${CMAKE_SOURCE_DIR}/src/server/game/Movement/Waypoints
+#  ${CMAKE_SOURCE_DIR}/src/server/game/Movement/Spline       --NYI  
   ${CMAKE_SOURCE_DIR}/src/server/game/OutdoorPvP
   ${CMAKE_SOURCE_DIR}/src/server/game/Pools
   ${CMAKE_SOURCE_DIR}/src/server/game/PrecompiledHeaders
@@ -146,13 +156,15 @@ set(worldserver_LINK_FLAGS "")
 add_executable(worldserver ${worldserver_SRCS})
 
 if( NOT WIN32 )
-  add_definitions(-D_SKYFIRE_CORE_CONFIG='"${CONF_DIR}/worldserver.conf"')
+    set_target_properties(worldserver PROPERTIES
+    COMPILE_DEFINITIONS _SKYFIRE_CORE_CONFIG="${CONF_DIR}/worldserver.conf"
+)
 endif()
 
 add_dependencies(worldserver revision.h)
 
-if( UNIX )
-  set(worldserver_LINK_FLAGS "-pthread -lncurses ${worldserver_LINK_FLAGS}")
+if( UNIX AND NOT NOJEM )
+    set(worldserver_LINK_FLAGS "-pthread -lncurses ${worldserver_LINK_FLAGS}")
 endif()
 
 if(APPLE)
@@ -168,13 +180,14 @@ target_link_libraries(worldserver
   collision
   g3dlib
   gsoap
+#  Detour  
   ${JEMALLOC_LIBRARY}
   ${READLINE_LIBRARY}
   ${TERMCAP_LIBRARY}
   ${ACE_LIBRARY}
   ${MYSQL_LIBRARY}
   ${OPENSSL_LIBRARIES}
-  ${OPENSSL_EXTRA_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
   ${ZLIB_LIBRARIES}
   ${OSX_LIBS}
 )
