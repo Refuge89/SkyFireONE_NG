@@ -39,13 +39,13 @@ init:
   - cmd: msbuild /version  
 
 # Clone to the specified folder below, and only clone the latest commit without history.
-clone_folder: C:\Projects\SkyFireONE
-clone_depth: 1
+#clone_folder: C:\Projects\SkyFireONE
+#clone_depth: 1
 
 # scripts that run after cloning repository
-install:
-  - cmd: cd C:\Projects\SkyFireONE
-  - cmd: git submodule update --init
+#install:
+#  - cmd: cd C:\Projects\SkyFireONE
+#  - cmd: git submodule update --init
 
 # scripts to run before build  
 before_build:
