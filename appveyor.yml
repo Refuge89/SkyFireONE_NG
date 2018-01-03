@@ -1,48 +1,68 @@
 # Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
 #
 
-version: 'version: 1.0.{build}-{branch}'
-pull_requests:
-  do_not_increment_build_number: true
-skip_tags: true
-max_jobs: 2
-clone_depth: 1
-clone_folder: C:\projects\SFO
+version: 
+'version: 1.0.{build}-{branch}'
 
-platform: 
-  - Win32
-  - x64
+# Build worker image (VM template)
+image: Visual Studio 2013
 
+environment:
+  matrix:
+  fast_finish: true  
+  - SF_VERSION: TBC
+    VS_VER: Visual Studio 12 2013
+  - SF_VERSION: TBC
+    VS_VER: Visual Studio 12 2013 Win64
+  #- SF_VERSION: Cata
+  #  VS_VER: Visual Studio 12 2013
+  #- SF_VERSION: Cata
+  #  VS_VER: Visual Studio 12 2013 Win64
+  #- SF_VERSION: Panda
+  #  VS_VER: Visual Studio 12 2013
+  #- SF_VERSION: Panda
+  #  VS_VER: Visual Studio 12 2013 Win64
+  #- SF_VERSION: Legion
+  #  VS_VER: Visual Studio 12 2013
+  #- SF_VERSION: Legion
+  #  VS_VER: Visual Studio 12 2013 Win64
+  
 # build Configuration, i.e. Debug, Release, etc.
 configuration:
-  - Debug
+  #- Debug
   - Release
 
-# scripts that are called at very beginning, before repo cloning
+# scripts that are called, before repo cloning  
 init:
+  - cmd: git config --global core.autocrlf input
   - cmd: cmake --version
-  - cmd: msbuild /version
+  - cmd: msbuild /version  
+
+# Clone to the specified folder below, and only clone the latest commit without history.
+clone_folder: C:\Projects\SkyFireONE
+clone_depth: 1
 
 # scripts that run after cloning repository
 install:
-  - cmd: cd C:\projects\SFO
+  - cmd: cd C:\Projects\SkyFireONE
   - cmd: git submodule update --init
 
-# scripts to run before build
+# scripts to run before build  
 before_build:
-  - cmd: cd C:\projects\SFO
-  - cmd: md build
-  - cmd: cd build
-  # We're only generating project files for Visual Studio 13 only atm.
-  - cmd: if "%platform%"=="Win32" set "CMAKE_GENERATOR_NAME=Visual Studio 12 2013"
-  - cmd: if "%platform%"=="x64"   set "CMAKE_GENERATOR_NAME=Visual Studio 12 2013 Win64"
-  - cmd: cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - cmd: echo %VS_VER%
+  - cmd: echo %Configuration%  
 
-build:
-  project: C:\projects\SFO\build\SkyFireONE.sln
+# Build core.  
+build_script:
+  - cmd: mkdir build
+  - cmd: cd build
+  - cmd: cmake ../ -G "%VS_VER%" -DBUILD_WITH_WARNINGS=0 -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TOOLS=0 -DBUILD_SCRIPTS=1 -DSF_VERSION=%SF_VERSION%
+  - cmd: msbuild SkyFireONE.sln
 
   # enable MSBuild parallel builds
+  max_jobs: 2
   parallel: true
 
   # MSBuild verbosity level (quiet|minimal|normal|detailed)
   verbosity: normal
+  
