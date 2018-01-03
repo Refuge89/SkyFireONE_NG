@@ -1,15 +1,48 @@
 # Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
 #
-environment:
-  matrix:
-    - GENERATOR: "Visual Studio 12 2013"
-      CONFIG: Debug
 
-    - GENERATOR: "Visual Studio 12 2013"
-      CONFIG: Release
+version: 'version: 1.0.{build}-{branch}'
+pull_requests:
+  do_not_increment_build_number: true
+skip_tags: true
+max_jobs: 2
+clone_depth: 1
+clone_folder: C:\projects\SFO
 
-build_script:
-  - mkdir build
-  - cd build
-  - cmake -G "%GENERATOR%" ..
-  - cmake --build . --config %CONFIG%
+platform: 
+  - Win32
+  - x64
+
+# build Configuration, i.e. Debug, Release, etc.
+configuration:
+  - Debug
+  - Release
+
+# scripts that are called at very beginning, before repo cloning
+init:
+  - cmd: cmake --version
+  - cmd: msbuild /version
+
+# scripts that run after cloning repository
+install:
+  - cmd: cd C:\projects\SFO
+  - cmd: git submodule update --init
+
+# scripts to run before build
+before_build:
+  - cmd: cd C:\projects\SFO
+  - cmd: md build
+  - cmd: cd build
+  # We're only generating project files for Visual Studio 13 only atm.
+  - cmd: if "%platform%"=="Win32" set "CMAKE_GENERATOR_NAME=Visual Studio 12 2013"
+  - cmd: if "%platform%"=="x64"   set "CMAKE_GENERATOR_NAME=Visual Studio 12 2013 Win64"
+  - cmd: cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
+
+build:
+  project: C:\projects\SFO\build\SkyFireONE.sln
+
+  # enable MSBuild parallel builds
+  parallel: true
+
+  # MSBuild verbosity level (quiet|minimal|normal|detailed)
+  verbosity: normal
