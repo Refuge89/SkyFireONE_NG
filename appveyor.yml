@@ -5,9 +5,10 @@ version: '1.0.{build}-{branch}'
 
 # Build worker image (VM template)
 image: 
- - Visual Studio 2013
+  - Visual Studio 2013
 
- services: mysql
+ services: 
+  - mysql
 
 environment:
   matrix: 
