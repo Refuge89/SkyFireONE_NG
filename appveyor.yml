@@ -1,15 +1,13 @@
 # Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
 #
 
-version: 
-'version: 1.0.{build}-{branch}'
+version: '1.0.{build}-{branch}'
 
 # Build worker image (VM template)
 image: Visual Studio 2013
 
 environment:
-  matrix:
-  fast_finish: true  
+  matrix: 
   - SF_VERSION: TBC
     VS_VER: Visual Studio 12 2013
   - SF_VERSION: TBC
@@ -60,9 +58,9 @@ build_script:
   - cmd: msbuild SkyFireONE.sln
 
   # enable MSBuild parallel builds
-  max_jobs: 2
-  parallel: true
+  - max_jobs: 2
+  - parallel: true
 
   # MSBuild verbosity level (quiet|minimal|normal|detailed)
-  verbosity: normal
+  - verbosity: normal
   
