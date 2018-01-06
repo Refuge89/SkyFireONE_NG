@@ -44,7 +44,7 @@ init:
 #clone_folder: C:\Projects\SkyFireONE
 #clone_depth: 1
 
- scripts that run after cloning repository
+#scripts that run after cloning repository
 install:
   - set PATH=%PATH%;C:\Program Files\MySql\MySQL Server 5.6\bin
 #  - cmd: cd C:\Projects\SkyFireONE
