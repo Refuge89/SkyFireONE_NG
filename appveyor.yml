@@ -5,7 +5,7 @@ version: '1.0.{build}-{branch}'
 
 # Build worker image (VM template)
 image: 
-  - Visual Studio 2013
+  - Visual Studio 2017
 
 services:
   - mysql
@@ -13,21 +13,21 @@ services:
 environment:
   matrix: 
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 12 2013
+    VS_VER: Visual Studio 15 2017
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 12 2013 Win64
+    VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Cata
-  #  VS_VER: Visual Studio 12 2013
+  #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Cata
-  #  VS_VER: Visual Studio 12 2013 Win64
+  #  VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Panda
-  #  VS_VER: Visual Studio 12 2013
+  #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Panda
-  #  VS_VER: Visual Studio 12 2013 Win64
+  #  VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Legion
-  #  VS_VER: Visual Studio 12 2013
+  #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Legion
-  #  VS_VER: Visual Studio 12 2013 Win64
+  #  VS_VER: Visual Studio 15 2017 Win64
   
 # build Configuration, i.e. Debug, Release, etc.
 configuration:
