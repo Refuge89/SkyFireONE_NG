@@ -1,7 +1,7 @@
 # Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
 #
 
-version: '1.0.{build}-{branch}'
+version: '2.0.{build}-{branch}'
 
 # Build worker image (VM template)
 image: 
@@ -12,20 +12,12 @@ services:
  
 environment:
   matrix: 
-  #- SF_VERSION: TBC
-  #  VS_VER: Visual Studio 15 2017
   - SF_VERSION: TBC
     VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Cata
-  #  VS_VER: Visual Studio 15 2017
-  #- SF_VERSION: Cata
   #  VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Panda
-  #  VS_VER: Visual Studio 15 2017
-  #- SF_VERSION: Panda
   #  VS_VER: Visual Studio 15 2017 Win64
-  #- SF_VERSION: Legion
-  #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Legion
   #  VS_VER: Visual Studio 15 2017 Win64
   
@@ -34,26 +26,15 @@ configuration:
   - Debug
   - Release
 
-# Build IDE Platform, i.e. Win32, x64, AnyPC, etc.
-#platform:
-#  - x86
-#  - x64
- 
 # scripts that are called, before repo cloning  
 init:
   - cmd: git config --global core.autocrlf input
   - cmd: cmake --version
   - cmd: msbuild /version  
 
-# Clone to the specified folder below, and only clone the latest commit without history.
-#clone_folder: C:\Projects\SkyFireONE
-#clone_depth: 1
-
 #scripts that run after cloning repository
 install:
   - set PATH=%PATH%;C:\Program Files (x86)\MySQL\MySQL Server 5.6\bin
-#  - cmd: cd C:\Projects\SkyFireONE
-#  - cmd: git submodule update --init
 
 # scripts to run before build  
 before_build:
@@ -73,11 +54,3 @@ build_script:
 
   # MSBuild verbosity level (quiet|minimal|normal|detailed)
   - verbosity: normal
-  
-  
-notifications:
- irc:
-  channels:
-   - "irc.rizon.net#project_skyfire"
-on_success: always
-on_failure: always
