@@ -9,13 +9,13 @@ image:
 
 services:
   - mysql
-
+ 
 environment:
   matrix: 
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 15 2017
+    VS_VER: Visual Studio 15 2017 x86
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 15 2017 Win64
+    VS_VER: Visual Studio 15 2017 x64
   #- SF_VERSION: Cata
   #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Cata
@@ -34,6 +34,11 @@ configuration:
   #- Debug
   - Release
 
+# Build IDE Platform, i.e. Win32, x64, AnyPC, etc.
+platform:
+  - x86
+  - x64
+ 
 # scripts that are called, before repo cloning  
 init:
   - cmd: git config --global core.autocrlf input
@@ -60,7 +65,7 @@ build_script:
   - cmd: mkdir build
   - cmd: cd build
   - cmd: cmake ../ -G "%VS_VER%" -DBUILD_WITH_WARNINGS=0 -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TOOLS=0 -DBUILD_SCRIPTS=1 -DSF_VERSION=%SF_VERSION%
-  - cmd: msbuild SkyFireONE.sln
+  - cmd: msbuild /m SkyFireONE.sln
 
   # enable MSBuild parallel builds
   - max_jobs: 2
