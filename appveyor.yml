@@ -12,8 +12,8 @@ services:
  
 environment:
   matrix: 
-  - SF_VERSION: TBC
-    VS_VER: Visual Studio 15 2017 Win32
+  #- SF_VERSION: TBC
+  #  VS_VER: Visual Studio 15 2017
   - SF_VERSION: TBC
     VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Cata
@@ -31,7 +31,7 @@ environment:
   
 # build Configuration, i.e. Debug, Release, etc.
 configuration:
-  #- Debug
+  - Debug
   - Release
 
 # Build IDE Platform, i.e. Win32, x64, AnyPC, etc.
