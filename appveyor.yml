@@ -7,6 +7,12 @@ version: '2.0.{build}-{branch}'
 image: 
   - Visual Studio 2017
 
+skip_tags: true
+clone_depth: 1
+
+pull_requests:
+   do_not_increment_build_number: true  
+  
 services:
   - mysql
  
@@ -34,6 +40,7 @@ init:
 
 #scripts that run after cloning repository
 install:
+  - set PATH=%PATH%;C:\Program Files\MySQL\MySQL Server 5.6\bin
   - set PATH=%PATH%;C:\Program Files (x86)\MySQL\MySQL Server 5.6\bin
 
 # scripts to run before build  
@@ -48,9 +55,9 @@ build_script:
   - cmd: cmake ../ -G "%VS_VER%" -DBUILD_WITH_WARNINGS=0 -DCMAKE_BUILD_TYPE=%CONFIGURATION% -DBUILD_TOOLS=0 -DBUILD_SCRIPTS=1 -DSF_VERSION=%SF_VERSION%
   - cmd: msbuild /m SkyFireONE.sln
 
-  # enable MSBuild parallel builds
+# enable MSBuild parallel builds
   - max_jobs: 2
   - parallel: true
-
-  # MSBuild verbosity level (quiet|minimal|normal|detailed)
+  
+# MSBuild verbosity level (quiet|minimal|normal|detailed)
   - verbosity: normal
