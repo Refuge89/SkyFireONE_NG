@@ -74,3 +74,10 @@ build_script:
   # MSBuild verbosity level (quiet|minimal|normal|detailed)
   - verbosity: normal
   
+  
+notifications:
+ irc:
+  channels:
+   - "irc.rizon.net#project_skyfire"
+on_success: always
+on_failure: always
