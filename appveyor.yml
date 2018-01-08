@@ -13,9 +13,9 @@ services:
 environment:
   matrix: 
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 15 2017 x86
+    VS_VER: Visual Studio 15 2017 Win32
   - SF_VERSION: TBC
-    VS_VER: Visual Studio 15 2017 x64
+    VS_VER: Visual Studio 15 2017 Win64
   #- SF_VERSION: Cata
   #  VS_VER: Visual Studio 15 2017
   #- SF_VERSION: Cata
@@ -35,9 +35,9 @@ configuration:
   - Release
 
 # Build IDE Platform, i.e. Win32, x64, AnyPC, etc.
-platform:
-  - x86
-  - x64
+#platform:
+#  - x86
+#  - x64
  
 # scripts that are called, before repo cloning  
 init:
