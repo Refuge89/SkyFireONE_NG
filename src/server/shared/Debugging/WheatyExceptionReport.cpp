@@ -1,9 +1,31 @@
+/*
+ * Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2018 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2018 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2018 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
 //==========================================
 // Matt Pietrek
 // MSDN Magazine, 2002
 // FILE: WheatyExceptionReport.CPP
 //==========================================
-#if PLATFORM == PLATFORM_WINDOWS
+#include "CompilerDefs.h"
+
+#if PLATFORM == PLATFORM_WINDOWS && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN
 #pragma warning(disable:4996)
 #pragma warning(disable:4312)
@@ -175,128 +197,114 @@ BOOL WheatyExceptionReport::_GetProcessorName(TCHAR* sProcessorName, DWORD maxco
 
 BOOL WheatyExceptionReport::_GetWindowsVersion(TCHAR* szVersion, DWORD cntMax)
 {
-    // Try calling GetVersionEx using the OSVERSIONINFOEX structure.
-    // If that fails, try using the OSVERSIONINFO structure.
-    OSVERSIONINFOEX osvi = { 0 };
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-    BOOL bOsVersionInfoEx;
-    bOsVersionInfoEx = ::GetVersionEx((LPOSVERSIONINFO)(&osvi));
-    if (!bOsVersionInfoEx)
-    {
-        osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-        if (!::GetVersionEx((OSVERSIONINFO*)&osvi))
-            return FALSE;
-    }
-    *szVersion = _T('\0');
-    TCHAR wszTmp[128];
-    switch (osvi.dwPlatformId)
-    {
-        // Windows NT product family.
-        case VER_PLATFORM_WIN32_NT:
-            // Test for the specific product family.
-            if (osvi.dwMajorVersion == 6)
-                _tcsncat(szVersion, _T("Windows Vista or Windows Server 2008 "), cntMax);
-            if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
-                _tcsncat(szVersion, _T("Microsoft Windows Server 2003 "), cntMax);
-            if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
-                _tcsncat(szVersion, _T("Microsoft Windows XP "), cntMax);
-            if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
-                _tcsncat(szVersion, _T("Microsoft Windows 2000 "), cntMax);
-            if (osvi.dwMajorVersion <= 4)
-                _tcsncat(szVersion, _T("Microsoft Windows NT "), cntMax);
+ // Try calling GetVersionEx using the OSVERSIONINFOEX structure.
+ // If that fails, try using the OSVERSIONINFO structure.
+ OSVERSIONINFOEX osvi = { 0 };
+ osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+ BOOL bOsVersionInfoEx;
+ bOsVersionInfoEx = ::GetVersionEx((LPOSVERSIONINFO)(&osvi));
+ if (!bOsVersionInfoEx)
+ {
+  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+  if (!::GetVersionEx((OSVERSIONINFO*)&osvi))
+   return FALSE;
+ }
+ *szVersion = _T('\0');
+ TCHAR wszTmp[128];
+ switch (osvi.dwPlatformId)
+ {
+  // Windows NT product family.
+ case VER_PLATFORM_WIN32_NT:
+ {
+#if WINVER < 0x0500
+  BYTE suiteMask = osvi.wReserved[0];
+  BYTE productType = osvi.wReserved[1];
+#else
+  WORD suiteMask = osvi.wSuiteMask;
+  BYTE productType = osvi.wProductType;
+#endif                                          // WINVER < 0x0500
 
-            // Test for specific product on Windows NT 4.0 SP6 and later.
-            if (bOsVersionInfoEx)
-            {
-                // Test for the workstation type.
-            #if WINVER < 0x0500
-                if (osvi.wReserved[1] == VER_NT_WORKSTATION)
-            #else
-                    if (osvi.wProductType == VER_NT_WORKSTATION)
-            #endif                                          // WINVER < 0x0500
-            {
-                if (osvi.dwMajorVersion == 4)
-                    _tcsncat(szVersion, _T("Workstation 4.0 "), cntMax);
-                #if WINVER < 0x0500
-                else if (osvi.wReserved[0] & VER_SUITE_PERSONAL)
-                #else
-                    else if (osvi.wSuiteMask & VER_SUITE_PERSONAL)
-                #endif                                      // WINVER < 0x0500
-                        _tcsncat(szVersion, _T("Home Edition "), cntMax);
-                #if WINVER < 0x0500
-                else if (osvi.wReserved[0] & VER_SUITE_EMBEDDEDNT)
-                #else
-                    else if (osvi.wSuiteMask & VER_SUITE_EMBEDDEDNT)
-                #endif                                      // WINVER < 0x0500
-                        _tcsncat(szVersion, _T("Embedded "), cntMax);
-                else
-                    _tcsncat(szVersion, _T("Professional "), cntMax);
-            }
-            // Test for the server type.
-            #if WINVER < 0x0500
-            else if (osvi.wReserved[1] == VER_NT_SERVER)
-            #else
-                else if (osvi.wProductType == VER_NT_SERVER)
-            #endif                                          // WINVER < 0x0500
-            {
-                if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
-                {
-                    #if WINVER < 0x0500
-                    if (osvi.wReserved[0] & VER_SUITE_DATACENTER)
-                    #else
-                        if (osvi.wSuiteMask & VER_SUITE_DATACENTER)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Datacenter Edition "), cntMax);
-                    #if WINVER < 0x0500
-                    else if (osvi.wReserved[0] & VER_SUITE_ENTERPRISE)
-                    #else
-                        else if (osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Enterprise Edition "), cntMax);
-                    #if WINVER < 0x0500
-                    else if (osvi.wReserved[0] == VER_SUITE_BLADE)
-                    #else
-                        else if (osvi.wSuiteMask == VER_SUITE_BLADE)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Web Edition "), cntMax);
-                    else
-                        _tcsncat(szVersion, _T("Standard Edition "), cntMax);
-                }
-                else if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
-                {
-                    #if WINVER < 0x0500
-                    if (osvi.wReserved[0] & VER_SUITE_DATACENTER)
-                    #else
-                        if (osvi.wSuiteMask & VER_SUITE_DATACENTER)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Datacenter Server "), cntMax);
-                    #if WINVER < 0x0500
-                    else if (osvi.wReserved[0] & VER_SUITE_ENTERPRISE)
-                    #else
-                        else if (osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Advanced Server "), cntMax);
-                    else
-                        _tcsncat(szVersion, _T("Server "), cntMax);
-                }
-                else                                        // Windows NT 4.0
-                {
-                    #if WINVER < 0x0500
-                    if (osvi.wReserved[0] & VER_SUITE_ENTERPRISE)
-                    #else
-                        if (osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
-                    #endif                                  // WINVER < 0x0500
-                            _tcsncat(szVersion, _T("Server 4.0, Enterprise Edition "), cntMax);
-                    else
-                        _tcsncat(szVersion, _T("Server 4.0 "), cntMax);
-                }
-            }
-        }
-        // Display service pack (if any) and build number.
-        if (osvi.dwMajorVersion == 4 && _tcsicmp(osvi.szCSDVersion, _T("Service Pack 6")) == 0)
-        {
-            HKEY hKey;
-            LONG lRet;
+  // Test for the specific product family.
+  if (osvi.dwMajorVersion == 6)
+  {
+   if (productType == VER_NT_WORKSTATION)
+   {
+    if (osvi.dwMinorVersion == 2)
+     _tcsncat(szVersion, _T("Windows 8 "), cntMax);
+    else if (osvi.dwMinorVersion == 1)
+     _tcsncat(szVersion, _T("Windows 7 "), cntMax);
+    else
+     _tcsncat(szVersion, _T("Windows Vista "), cntMax);
+   }
+   else if (osvi.dwMinorVersion == 2)
+    _tcsncat(szVersion, _T("Windows Server 2012 "), cntMax);
+   else if (osvi.dwMinorVersion == 1)
+    _tcsncat(szVersion, _T("Windows Server 2008 R2 "), cntMax);
+   else
+    _tcsncat(szVersion, _T("Windows Server 2008 "), cntMax);
+  }
+  else if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
+   _tcsncat(szVersion, _T("Microsoft Windows Server 2003 "), cntMax);
+  else if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
+   _tcsncat(szVersion, _T("Microsoft Windows XP "), cntMax);
+  else if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
+   _tcsncat(szVersion, _T("Microsoft Windows 2000 "), cntMax);
+  else if (osvi.dwMajorVersion <= 4)
+   _tcsncat(szVersion, _T("Microsoft Windows NT "), cntMax);
+
+  // Test for specific product on Windows NT 4.0 SP6 and later.
+  if (bOsVersionInfoEx)
+  {
+   // Test for the workstation type.
+   if (productType == VER_NT_WORKSTATION)
+   {
+    if (osvi.dwMajorVersion == 4)
+     _tcsncat(szVersion, _T("Workstation 4.0 "), cntMax);
+    else if (suiteMask & VER_SUITE_PERSONAL)
+     _tcsncat(szVersion, _T("Home Edition "), cntMax);
+    else if (suiteMask & VER_SUITE_EMBEDDEDNT)
+     _tcsncat(szVersion, _T("Embedded "), cntMax);
+    else
+     _tcsncat(szVersion, _T("Professional "), cntMax);
+   }
+   // Test for the server type.
+   else if (productType == VER_NT_SERVER)
+   {
+    if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
+    {
+     if (suiteMask & VER_SUITE_DATACENTER)
+      _tcsncat(szVersion, _T("Datacenter Edition "), cntMax);
+     else if (suiteMask & VER_SUITE_ENTERPRISE)
+      _tcsncat(szVersion, _T("Enterprise Edition "), cntMax);
+     else if (suiteMask == VER_SUITE_BLADE)
+      _tcsncat(szVersion, _T("Web Edition "), cntMax);
+     else
+      _tcsncat(szVersion, _T("Standard Edition "), cntMax);
+    }
+    else if (osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
+    {
+     if (suiteMask & VER_SUITE_DATACENTER)
+      _tcsncat(szVersion, _T("Datacenter Server "), cntMax);
+     else if (suiteMask & VER_SUITE_ENTERPRISE)
+      _tcsncat(szVersion, _T("Advanced Server "), cntMax);
+     else
+      _tcsncat(szVersion, _T("Server "), cntMax);
+    }
+    else                                        // Windows NT 4.0
+    {
+     if (suiteMask & VER_SUITE_ENTERPRISE)
+      _tcsncat(szVersion, _T("Server 4.0, Enterprise Edition "), cntMax);
+     else
+      _tcsncat(szVersion, _T("Server 4.0 "), cntMax);
+    }
+   }
+  }
+
+  // Display service pack (if any) and build number.
+  if (osvi.dwMajorVersion == 4 && _tcsicmp(osvi.szCSDVersion, _T("Service Pack 6")) == 0)
+  {
+   HKEY hKey;
+   LONG lRet;
 
             // Test for SP6 versus SP6a.
             lRet = ::RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Hotfix\\Q246009"), 0, KEY_QUERY_VALUE, &hKey);
@@ -341,16 +349,16 @@ void WheatyExceptionReport::PrintSystemInfo()
     ::GetSystemInfo(&SystemInfo);
 
     MEMORYSTATUS MemoryStatus;
-    MemoryStatus.dwLength = sizeof (MEMORYSTATUS);
+    MemoryStatus.dwLength = sizeof(MEMORYSTATUS);
     ::GlobalMemoryStatus(&MemoryStatus);
     TCHAR sString[1024];
     _tprintf(_T("//=====================================================\r\n"));
     if (_GetProcessorName(sString, countof(sString)))
         _tprintf(_T("*** Hardware ***\r\nProcessor: %s\r\nNumber Of Processors: %d\r\nPhysical Memory: %d KB (Available: %d KB)\r\nCommit Charge Limit: %d KB\r\n"),
-            sString, SystemInfo.dwNumberOfProcessors, MemoryStatus.dwTotalPhys/0x400, MemoryStatus.dwAvailPhys/0x400, MemoryStatus.dwTotalPageFile/0x400);
+            sString, SystemInfo.dwNumberOfProcessors, MemoryStatus.dwTotalPhys / 0x400, MemoryStatus.dwAvailPhys / 0x400, MemoryStatus.dwTotalPageFile / 0x400);
     else
         _tprintf(_T("*** Hardware ***\r\nProcessor: <unknown>\r\nNumber Of Processors: %d\r\nPhysical Memory: %d KB (Available: %d KB)\r\nCommit Charge Limit: %d KB\r\n"),
-            SystemInfo.dwNumberOfProcessors, MemoryStatus.dwTotalPhys/0x400, MemoryStatus.dwAvailPhys/0x400, MemoryStatus.dwTotalPageFile/0x400);
+            SystemInfo.dwNumberOfProcessors, MemoryStatus.dwTotalPhys / 0x400, MemoryStatus.dwAvailPhys / 0x400, MemoryStatus.dwTotalPageFile / 0x400);
 
     if (_GetWindowsVersion(sString, countof(sString)))
         _tprintf(_T("\r\n*** Operation System ***\r\n%s\r\n"), sString);
@@ -361,48 +369,49 @@ void WheatyExceptionReport::PrintSystemInfo()
 //===========================================================================
 void WheatyExceptionReport::printTracesForAllThreads()
 {
-  HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
-  THREADENTRY32 te32;
+ HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
+ THREADENTRY32 te32;
 
-  DWORD dwOwnerPID = GetCurrentProcessId();
-  m_hProcess = GetCurrentProcess();
-  // Take a snapshot of all running threads
-  hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-  if (hThreadSnap == INVALID_HANDLE_VALUE)
-    return;
+ DWORD dwOwnerPID = GetCurrentProcessId();
+ m_hProcess = GetCurrentProcess();
+ // Take a snapshot of all running threads
+ hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+ if (hThreadSnap == INVALID_HANDLE_VALUE)
+  return;
 
-  // Fill in the size of the structure before using it.
-  te32.dwSize = sizeof(THREADENTRY32);
+ // Fill in the size of the structure before using it.
+ te32.dwSize = sizeof(THREADENTRY32);
 
-  // Retrieve information about the first thread,
-  // and exit if unsuccessful
-  if (!Thread32First(hThreadSnap, &te32))
+ // Retrieve information about the first thread,
+ // and exit if unsuccessful
+ if (!Thread32First(hThreadSnap, &te32))
+ {
+  CloseHandle(hThreadSnap);    // Must clean up the
+                               //   snapshot object!
+  return;
+ }
+
+ // Now walk the thread list of the system,
+ // and display information about each thread
+ // associated with the specified process
+ do
+ {
+  if (te32.th32OwnerProcessID == dwOwnerPID)
   {
-    CloseHandle(hThreadSnap);    // Must clean up the
-                                   //   snapshot object!
-    return;
+   CONTEXT context;
+   context.ContextFlags = 0xffffffff;
+   HANDLE threadHandle = OpenThread(THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION, false, te32.th32ThreadID);
+   if (threadHandle)
+   {
+    if (GetThreadContext(threadHandle, &context))
+     WriteStackDetails(&context, false, threadHandle);
+    CloseHandle(threadHandle);
+   }
   }
+ } while (Thread32Next(hThreadSnap, &te32));
 
-  // Now walk the thread list of the system,
-  // and display information about each thread
-  // associated with the specified process
-  do
-  {
-    if (te32.th32OwnerProcessID == dwOwnerPID)
-    {
-        CONTEXT context;
-        context.ContextFlags = 0xffffffff;
-        HANDLE threadHandle = OpenThread(THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION, false, te32.th32ThreadID);
-        if (threadHandle && GetThreadContext(threadHandle, &context))
-        {
-            WriteStackDetails(&context, false, threadHandle);
-        }
-        CloseHandle(threadHandle);
-    }
-  } while(Thread32Next(hThreadSnap, &te32));
-
-//  Don't forget to clean up the snapshot object.
-  CloseHandle(hThreadSnap);
+ //  Don't forget to clean up the snapshot object.
+ CloseHandle(hThreadSnap);
 }
 
 //===========================================================================
@@ -505,7 +514,7 @@ PEXCEPTION_POINTERS pExceptionInfo)
     _tprintf(_T("Global Variables\r\n"));
 
     SymEnumSymbols(GetCurrentProcess(),
-        (DWORD64)GetModuleHandle(szFaultingModule),
+        (UINT_PTR)GetModuleHandle(szFaultingModule),
         0, EnumerateSymbolsCallback, 0);
   //  #endif                                                  // X86 Only!
 
@@ -669,7 +678,7 @@ bool bWriteVariables, HANDLE pThreadHandle)                                     
     while (1)
     {
         // Get the next stack frame
-        if (! StackWalk64(dwMachineType,
+        if (!StackWalk64(dwMachineType,
             m_hProcess,
             pThreadHandle != NULL ? pThreadHandle : GetCurrentThread(),
             &sf,
@@ -700,6 +709,7 @@ bool bWriteVariables, HANDLE pThreadHandle)                                     
             &sip.si))                                       // Address of the SYMBOL_INFO structure (inside "sip" object)
         {
             _tprintf(_T("%hs+%I64X"), sip.si.Name, symDisplacement);
+
         }
         else                                                // No symbol found.  Print out the logical address instead.
         {
@@ -708,7 +718,7 @@ bool bWriteVariables, HANDLE pThreadHandle)                                     
             DWORD_PTR offset = 0;
 
             GetLogicalAddress((PVOID)sf.AddrPC.Offset,
-                szModule, sizeof(szModule), section, offset);
+               szModule, sizeof(szModule), section, offset);
 #ifdef _M_IX86
             _tprintf(_T("%04X:%08X %s"), section, offset, szModule);
 #endif
@@ -750,24 +760,25 @@ bool bWriteVariables, HANDLE pThreadHandle)                                     
 
 BOOL CALLBACK
 WheatyExceptionReport::EnumerateSymbolsCallback(
-PSYMBOL_INFO  pSymInfo,
-ULONG         SymbolSize,
-PVOID         UserContext)
+ PSYMBOL_INFO  pSymInfo,
+ ULONG         /*SymbolSize*/,
+ PVOID         UserContext)
 {
-    char szBuffer[2048];
 
-    __try
-    {
-        if (FormatSymbolValue(pSymInfo, (STACKFRAME*)UserContext,
-            szBuffer, sizeof(szBuffer)))
-            _tprintf(_T("\t%s\r\n"), szBuffer);
-    }
-    __except(1)
-    {
-        _tprintf(_T("punting on symbol %s\r\n"), pSymInfo->Name);
-    }
+ char szBuffer[2048];
 
-    return TRUE;
+ __try
+ {
+  if (FormatSymbolValue(pSymInfo, (STACKFRAME*)UserContext,
+   szBuffer, sizeof(szBuffer)))
+   _tprintf(_T("\t%s\r\n"), szBuffer);
+ }
+ __except (1)
+ {
+  _tprintf(_T("punting on symbol %s\r\n"), pSymInfo->Name);
+ }
+
+ return TRUE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -779,7 +790,7 @@ bool WheatyExceptionReport::FormatSymbolValue(
 PSYMBOL_INFO pSym,
 STACKFRAME * sf,
 char * pszBuffer,
-unsigned cbBuffer)
+ unsigned /*cbBuffer*/)
 {
     char * pszCurrBuffer = pszBuffer;
 
@@ -850,7 +861,7 @@ DWORD dwTypeIndex,
 unsigned nestingLevel,
 DWORD_PTR offset,
 bool & bHandled,
-char* Name)
+ char* /*Name*/)
 {
     bHandled = false;
 
