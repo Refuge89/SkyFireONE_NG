@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -27,6 +27,20 @@
 
 class Player;
 
+#define WEATHER_SEASONS 4
+struct WeatherSeasonChances
+{
+    uint32 rainChance;
+    uint32 snowChance;
+    uint32 stormChance;
+};
+
+struct WeatherData
+{
+    WeatherSeasonChances data[WEATHER_SEASONS];
+    uint32 ScriptId;
+};
+
 enum WeatherState
 {
     WEATHER_STATE_FINE              = 0,
@@ -43,29 +57,35 @@ enum WeatherState
     WEATHER_STATE_BLACKRAIN         = 90
 };
 
-struct WeatherZoneChances;
-
 // Weather for one zone
 class Weather
 {
     public:
-        Weather(uint32 zone, WeatherZoneChances const* weatherChances);
+        
+        Weather(uint32 zone, WeatherData const* weatherChances);
         ~Weather() { };
+
         bool ReGenerate();
         bool UpdateWeather();
+        
         void SendWeatherUpdateToPlayer(Player* player);
         static void SendFineWeatherUpdateToPlayer(Player* player);
         void SetWeather(WeatherType type, float grade);
+        
         // For which zone is this weather?
         uint32 GetZone() { return m_zone; };
+        uint32 GetScriptId() const { return m_weatherChances->ScriptId; }
+
         bool Update(time_t diff);
+    
     private:
+        
         WeatherState GetWeatherState() const;
         uint32 m_zone;
         WeatherType m_type;
         float m_grade;
         IntervalTimer m_timer;
-        WeatherZoneChances const* m_weatherChances;
+        WeatherData const* m_weatherChances;
 };
-#endif
 
+#endif

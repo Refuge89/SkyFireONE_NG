@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,65 +37,68 @@ enum Spells
     SPELL_SMITE                                            = 10934
 };
 
-struct boss_moira_bronzebeardAI : public ScriptedAI
+class boss_moira_bronzebeard : public CreatureScript
 {
-    boss_moira_bronzebeardAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_moira_bronzebeard() : CreatureScript("boss_moira_bronzebeard") { }
 
-    uint32 Heal_Timer;
-    uint32 MindBlast_Timer;
-    uint32 ShadowWordPain_Timer;
-    uint32 Smite_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        Heal_Timer = 12000;                                 //These times are probably wrong
-        MindBlast_Timer = 16000;
-        ShadowWordPain_Timer = 2000;
-        Smite_Timer = 8000;
+        return new boss_moira_bronzebeardAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_moira_bronzebeardAI : public ScriptedAI
     {
-    }
+        boss_moira_bronzebeardAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
+        uint32 Heal_Timer;
+        uint32 MindBlast_Timer;
+        uint32 ShadowWordPain_Timer;
+        uint32 Smite_Timer;
 
-        //MindBlast_Timer
-        if (MindBlast_Timer <= diff)
+        void Reset()
         {
-            DoCast(me->getVictim(), SPELL_MINDBLAST);
-            MindBlast_Timer = 14000;
-        } else MindBlast_Timer -= diff;
+            Heal_Timer = 12000;                                 //These times are probably wrong
+            MindBlast_Timer = 16000;
+            ShadowWordPain_Timer = 2000;
+            Smite_Timer = 8000;
+        }
 
-        //ShadowWordPain_Timer
-        if (ShadowWordPain_Timer <= diff)
+        void EnterCombat(Unit * /*who*/)
         {
-            DoCast(me->getVictim(), SPELL_SHADOWWORDPAIN);
-            ShadowWordPain_Timer = 18000;
-        } else ShadowWordPain_Timer -= diff;
+        }
 
-        //Smite_Timer
-        if (Smite_Timer <= diff)
+        void UpdateAI(const uint32 diff)
         {
-            DoCast(me->getVictim(), SPELL_SMITE);
-            Smite_Timer = 10000;
-        } else Smite_Timer -= diff;
-    }
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //MindBlast_Timer
+            if (MindBlast_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_MINDBLAST);
+                MindBlast_Timer = 14000;
+            } else MindBlast_Timer -= diff;
+
+            //ShadowWordPain_Timer
+            if (ShadowWordPain_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SHADOWWORDPAIN);
+                ShadowWordPain_Timer = 18000;
+            } else ShadowWordPain_Timer -= diff;
+
+            //Smite_Timer
+            if (Smite_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SMITE);
+                Smite_Timer = 10000;
+            } else Smite_Timer -= diff;
+        }
+    };
 };
-CreatureAI* GetAI_boss_moira_bronzebeard(Creature* creature)
-{
-    return new boss_moira_bronzebeardAI (creature);
-}
 
 void AddSC_boss_moira_bronzebeard()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_moira_bronzebeard";
-    newscript->GetAI = &GetAI_boss_moira_bronzebeard;
-    newscript->RegisterSelf();
+    new boss_moira_bronzebeard();
 }

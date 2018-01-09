@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -514,7 +514,7 @@ void Creature::Update(uint32 diff)
             if (m_corpseRemoveTime <= time(NULL))
             {
                 RemoveCorpse(false);
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "Removing corpse... %u ", GetUInt32Value(OBJECT_FIELD_ENTRY));
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "Removing corpse... %u ", GetUInt32Value(OBJECT_FIELD_ENTRY));
             }
             else
             {
@@ -544,7 +544,7 @@ void Creature::Update(uint32 diff)
                 if (m_corpseRemoveTime <= time(NULL))
                 {
                     RemoveCorpse(false);
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Removing alive corpse... %u ", GetUInt32Value(OBJECT_FIELD_ENTRY));
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Removing alive corpse... %u ", GetUInt32Value(OBJECT_FIELD_ENTRY));
                 }
             }
 
@@ -605,6 +605,8 @@ void Creature::Update(uint32 diff)
         default:
             break;
     }
+
+    sScriptMgr->OnCreatureUpdate(this, diff);
 }
 
 void Creature::RegenerateMana()
@@ -669,7 +671,7 @@ bool Creature::AIM_Initialize(CreatureAI* ai)
     // make sure nothing can change the AI during AI update
     if (m_AI_locked)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "AIM_Initialize: failed to init, locked.");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "AIM_Initialize: failed to init, locked.");
         return false;
     }
 
@@ -1145,7 +1147,7 @@ bool Creature::CreateFromProto(uint32 guidlow, uint32 Entry, uint32 team, const 
     return true;
 }
 
-bool Creature::LoadFromDB(uint32 guid, Map *map)
+bool Creature::LoadCreatureFromDB(uint32 guid, Map* map, bool addToMap)
 {
     CreatureData const* data = sObjectMgr->GetCreatureData(guid);
 
@@ -1156,8 +1158,13 @@ bool Creature::LoadFromDB(uint32 guid, Map *map)
     }
 
     m_DBTableGuid = guid;
-    if (map->GetInstanceId() != 0)
-        guid = sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT);
+	if (map->GetInstanceId() == 0)
+	{
+		if (map->GetCreature(MAKE_NEW_GUID(guid, data->id, HIGHGUID_UNIT)))
+			return false;
+	}
+	else
+		guid = sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT);
 
     uint16 team = 0;
     if (!Create(guid, map, data->id, team, data->posX, data->posY, data->posZ, data->orientation, data))
@@ -1259,7 +1266,7 @@ void Creature::DeleteFromDB()
 {
     if (!m_DBTableGuid)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Trying to delete not saved creature!");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Trying to delete not saved creature!");
         return;
     }
 
@@ -1470,7 +1477,7 @@ void Creature::Respawn(bool force)
         if (m_DBTableGuid)
             sObjectMgr->SaveCreatureRespawnTime(m_DBTableGuid, GetInstanceId(), 0);
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Respawning...");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Respawning...");
         m_respawnTime = 0;
         lootForPickPocketed = false;
         lootForBody         = false;
@@ -1912,7 +1919,7 @@ bool Creature::LoadCreaturesAddon(bool reload)
 
             Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, cAura->effect_idx, NULL, this, this, 0);
             AddAura(AdditionalAura);
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u)", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[0], GetGUIDLow(), GetEntry());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: %u with Aura %u added to creature (GUIDLow: %u Entry: %u)", cAura->spell_id, AdditionalSpellInfo->EffectApplyAuraName[0], GetGUIDLow(), GetEntry());
         }
     }
     return true;
@@ -2104,14 +2111,14 @@ std::string Creature::GetAIName() const
     return ObjectMgr::GetCreatureTemplate(GetEntry())->AIName;
 }
 
-std::string Creature::GetScriptName()
+std::string Creature::GetScriptName() const
 {
     return sObjectMgr->GetScriptName(GetScriptId());
 }
 
-uint32 Creature::GetScriptId()
+uint32 Creature::GetScriptId() const
 {
-    return ObjectMgr::GetCreatureTemplate(GetEntry())->ScriptID;
+    return sObjectMgr->GetCreatureTemplate(GetEntry())->ScriptID;
 }
 
 VendorItemData const* Creature::GetVendorItems() const

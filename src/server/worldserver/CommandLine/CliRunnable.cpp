@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -17,7 +17,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// \addtogroup Trinityd
+/// \addtogroup SkyFire Daemon
 /// @{
 /// \file
 
@@ -85,9 +85,9 @@ char ** cli_completion(const char * text, int start, int /*end*/)
 
 int cli_hook_func(void)
 {
-       if (World::IsStopped())
-           rl_done = 1;
-       return 0;
+    if (World::IsStopped())
+        rl_done = 1;
+    return 0;
 }
 
 #endif
@@ -96,18 +96,18 @@ void utf8print(void* /*arg*/, const char* str)
 {
 #if PLATFORM == PLATFORM_WINDOWS
     wchar_t wtemp_buf[6000];
-    size_t wtemp_len = 6000-1;
+    size_t wtemp_len = 6000 - 1;
     if (!Utf8toWStr(str, strlen(str), wtemp_buf, wtemp_len))
         return;
 
     char temp_buf[6000];
-    CharToOemBuffW(&wtemp_buf[0], &temp_buf[0], wtemp_len+1);
+    CharToOemBuffW(&wtemp_buf[0], &temp_buf[0], wtemp_len + 1);
     printf(temp_buf);
 #else
-{
-    printf("%s", str);
-    fflush(stdout);
-}
+    {
+        printf("%s", str);
+        fflush(stdout);
+    }
 #endif
 }
 
@@ -125,7 +125,7 @@ bool ChatHandler::HandleAccountDeleteCommand(const char* args)
         return false;
 
     ///- Get the account name from the command line
-    char *account_name_str=strtok ((char*)args, " ");
+    char *account_name_str = strtok((char*)args, " ");
     if (!account_name_str)
         return false;
 
@@ -137,7 +137,7 @@ bool ChatHandler::HandleAccountDeleteCommand(const char* args)
         return false;
     }
 
-    uint32 account_id = sAccountMgr->GetId(account_name);
+    uint32 account_id = AccountMgr::GetId(account_name);
     if (!account_id)
     {
         PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, account_name.c_str());
@@ -148,48 +148,48 @@ bool ChatHandler::HandleAccountDeleteCommand(const char* args)
     // Commands not recommended call from chat, but support anyway
     if (m_session)
     {
-        uint32 targetSecurity = sAccountMgr->GetSecurity(account_id);
+        uint32 targetSecurity = AccountMgr::GetSecurity(account_id);
 
         // can delete only for account with less security
         // This is also reject self apply in fact
         if (targetSecurity >= m_session->GetSecurity())
         {
-            SendSysMessage (LANG_YOURS_SECURITY_IS_LOW);
-            SetSentErrorMessage (true);
+            SendSysMessage(LANG_YOURS_SECURITY_IS_LOW);
+            SetSentErrorMessage(true);
             return false;
         }
     }
 
-    AccountOpResult result = sAccountMgr->DeleteAccount(account_id);
+    AccountOpResult result = AccountMgr::DeleteAccount(account_id);
     switch (result)
     {
-        case AOR_OK:
-            PSendSysMessage(LANG_ACCOUNT_DELETED, account_name.c_str());
-            break;
-        case AOR_NAME_NOT_EXIST:
-            PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, account_name.c_str());
-            SetSentErrorMessage(true);
-            return false;
-        case AOR_DB_INTERNAL_ERROR:
-            PSendSysMessage(LANG_ACCOUNT_NOT_DELETED_SQL_ERROR, account_name.c_str());
-            SetSentErrorMessage(true);
-            return false;
-        default:
-            PSendSysMessage(LANG_ACCOUNT_NOT_DELETED, account_name.c_str());
-            SetSentErrorMessage(true);
-            return false;
+    case AOR_OK:
+        PSendSysMessage(LANG_ACCOUNT_DELETED, account_name.c_str());
+        break;
+    case AOR_NAME_DOES_NOT_EXIST:
+        PSendSysMessage(LANG_ACCOUNT_NOT_EXIST, account_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
+    case AOR_DB_INTERNAL_ERROR:
+        PSendSysMessage(LANG_ACCOUNT_NOT_DELETED_SQL_ERROR, account_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
+    default:
+        PSendSysMessage(LANG_ACCOUNT_NOT_DELETED, account_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
     }
 
     return true;
 }
 
 /**
- * Collects all GUIDs (and related info) from deleted characters which are still in the database.
- *
- * @param foundList    a reference to an std::list which will be filled with info data
- * @param searchString the search string which either contains a player GUID or a part fo the character-name
- * @return             returns false if there was a problem while selecting the characters (e.g. player name not normalizeable)
- */
+* Collects all GUIDs (and related info) from deleted characters which are still in the database.
+*
+* @param foundList    a reference to an std::list which will be filled with info data
+* @param searchString the search string which either contains a player GUID or a part fo the character-name
+* @return             returns false if there was a problem while selecting the characters (e.g. player name not normalizeable)
+*/
 bool ChatHandler::GetDeletedCharacterInfoList(DeletedInfoList& foundList, std::string searchString)
 {
     QueryResult_AutoPtr resultChar;
@@ -218,12 +218,12 @@ bool ChatHandler::GetDeletedCharacterInfoList(DeletedInfoList& foundList, std::s
 
             DeletedInfo info;
 
-            info.lowguid    = fields[0].GetUInt32();
-            info.name       = fields[1].GetCppString();
-            info.accountId  = fields[2].GetUInt32();
+            info.lowguid = fields[0].GetUInt32();
+            info.name = fields[1].GetCppString();
+            info.accountId = fields[2].GetUInt32();
 
             // account name will be empty for not existed account
-            sAccountMgr->GetName(info.accountId, info.accountName);
+			AccountMgr::GetName(info.accountId, info.accountName);
 
             info.deleteDate = time_t(fields[3].GetUInt64());
 
@@ -235,12 +235,12 @@ bool ChatHandler::GetDeletedCharacterInfoList(DeletedInfoList& foundList, std::s
 }
 
 /**
- * Generate WHERE guids list by deleted info in way preventing return too long where list for existed query string length limit.
- *
- * @param itr          a reference to an deleted info list iterator, it updated in function for possible next function call if list to long
- * @param itr_end      a reference to an deleted info list iterator end()
- * @return             returns generated where list string in form: 'guid IN (gui1, guid2, ...)'
- */
+* Generate WHERE guids list by deleted info in way preventing return too long where list for existed query string length limit.
+*
+* @param itr          a reference to an deleted info list iterator, it updated in function for possible next function call if list to long
+* @param itr_end      a reference to an deleted info list iterator end()
+* @return             returns generated where list string in form: 'guid IN (gui1, guid2, ...)'
+*/
 std::string ChatHandler::GenerateDeletedCharacterGUIDsWhereStr(DeletedInfoList::const_iterator& itr, DeletedInfoList::const_iterator const& itr_end)
 {
     std::ostringstream wherestr;
@@ -264,15 +264,15 @@ std::string ChatHandler::GenerateDeletedCharacterGUIDsWhereStr(DeletedInfoList::
 }
 
 /**
- * Shows all deleted characters which matches the given search string, expected non empty list
- *
- * @see ChatHandler::HandleCharacterDeletedListCommand
- * @see ChatHandler::HandleCharacterDeletedRestoreCommand
- * @see ChatHandler::HandleCharacterDeletedDeleteCommand
- * @see ChatHandler::DeletedInfoList
- *
- * @param foundList contains a list with all found deleted characters
- */
+* Shows all deleted characters which matches the given search string, expected non empty list
+*
+* @see ChatHandler::HandleCharacterDeletedListCommand
+* @see ChatHandler::HandleCharacterDeletedRestoreCommand
+* @see ChatHandler::HandleCharacterDeletedDeleteCommand
+* @see ChatHandler::DeletedInfoList
+*
+* @param foundList contains a list with all found deleted characters
+*/
 void ChatHandler::HandleCharacterDeletedListHelper(DeletedInfoList const& foundList)
 {
     if (!m_session)
@@ -301,15 +301,15 @@ void ChatHandler::HandleCharacterDeletedListHelper(DeletedInfoList const& foundL
 }
 
 /**
- * Handles the '.character deleted list' command, which shows all deleted characters which matches the given search string
- *
- * @see ChatHandler::HandleCharacterDeletedListHelper
- * @see ChatHandler::HandleCharacterDeletedRestoreCommand
- * @see ChatHandler::HandleCharacterDeletedDeleteCommand
- * @see ChatHandler::DeletedInfoList
- *
- * @param args the search string which either contains a player GUID or a part fo the character-name
- */
+* Handles the '.character deleted list' command, which shows all deleted characters which matches the given search string
+*
+* @see ChatHandler::HandleCharacterDeletedListHelper
+* @see ChatHandler::HandleCharacterDeletedRestoreCommand
+* @see ChatHandler::HandleCharacterDeletedDeleteCommand
+* @see ChatHandler::DeletedInfoList
+*
+* @param args the search string which either contains a player GUID or a part fo the character-name
+*/
 bool ChatHandler::HandleCharacterDeletedListCommand(const char* args)
 {
     DeletedInfoList foundList;
@@ -328,15 +328,15 @@ bool ChatHandler::HandleCharacterDeletedListCommand(const char* args)
 }
 
 /**
- * Restore a previously deleted character
- *
- * @see ChatHandler::HandleCharacterDeletedListHelper
- * @see ChatHandler::HandleCharacterDeletedRestoreCommand
- * @see ChatHandler::HandleCharacterDeletedDeleteCommand
- * @see ChatHandler::DeletedInfoList
- *
- * @param delInfo the information about the character which will be restored
- */
+* Restore a previously deleted character
+*
+* @see ChatHandler::HandleCharacterDeletedListHelper
+* @see ChatHandler::HandleCharacterDeletedRestoreCommand
+* @see ChatHandler::HandleCharacterDeletedDeleteCommand
+* @see ChatHandler::DeletedInfoList
+*
+* @param delInfo the information about the character which will be restored
+*/
 void ChatHandler::HandleCharacterDeletedRestoreHelper(DeletedInfo const& delInfo)
 {
     if (delInfo.accountName.empty())                    // account not exist
@@ -346,7 +346,7 @@ void ChatHandler::HandleCharacterDeletedRestoreHelper(DeletedInfo const& delInfo
     }
 
     // check character count
-    uint32 charcount = sAccountMgr->GetCharactersCount(delInfo.accountId);
+    uint32 charcount = AccountMgr::GetCharactersCount(delInfo.accountId);
     if (charcount >= 10)
     {
         PSendSysMessage(LANG_CHARACTER_DELETED_SKIP_FULL, delInfo.name.c_str(), delInfo.lowguid, delInfo.accountId);
@@ -364,16 +364,16 @@ void ChatHandler::HandleCharacterDeletedRestoreHelper(DeletedInfo const& delInfo
 }
 
 /**
- * Handles the '.character deleted restore' command, which restores all deleted characters which matches the given search string
- *
- * The command automatically calls '.character deleted list' command with the search string to show all restored characters.
- *
- * @see ChatHandler::HandleCharacterDeletedRestoreHelper
- * @see ChatHandler::HandleCharacterDeletedListCommand
- * @see ChatHandler::HandleCharacterDeletedDeleteCommand
- *
- * @param args the search string which either contains a player GUID or a part of the character-name
- */
+* Handles the '.character deleted restore' command, which restores all deleted characters which matches the given search string
+*
+* The command automatically calls '.character deleted list' command with the search string to show all restored characters.
+*
+* @see ChatHandler::HandleCharacterDeletedRestoreHelper
+* @see ChatHandler::HandleCharacterDeletedListCommand
+* @see ChatHandler::HandleCharacterDeletedDeleteCommand
+*
+* @param args the search string which either contains a player GUID or a part of the character-name
+*/
 bool ChatHandler::HandleCharacterDeletedRestoreCommand(const char* args)
 {
     // It is required to submit at least one argument
@@ -418,7 +418,7 @@ bool ChatHandler::HandleCharacterDeletedRestoreCommand(const char* args)
         if (newAccount && newAccount != delInfo.accountId)
         {
             delInfo.accountId = newAccount;
-            sAccountMgr->GetName(newAccount, delInfo.accountName);
+			AccountMgr::GetName(newAccount, delInfo.accountName);
         }
 
         HandleCharacterDeletedRestoreHelper(delInfo);
@@ -430,15 +430,15 @@ bool ChatHandler::HandleCharacterDeletedRestoreCommand(const char* args)
 }
 
 /**
- * Handles the '.character deleted delete' command, which completely deletes all deleted characters which matches the given search string
- *
- * @see Player::GetDeletedCharacterGUIDs
- * @see Player::DeleteFromDB
- * @see ChatHandler::HandleCharacterDeletedListCommand
- * @see ChatHandler::HandleCharacterDeletedRestoreCommand
- *
- * @param args the search string which either contains a player GUID or a part fo the character-name
- */
+* Handles the '.character deleted delete' command, which completely deletes all deleted characters which matches the given search string
+*
+* @see Player::GetDeletedCharacterGUIDs
+* @see Player::DeleteFromDB
+* @see ChatHandler::HandleCharacterDeletedListCommand
+* @see ChatHandler::HandleCharacterDeletedRestoreCommand
+*
+* @param args the search string which either contains a player GUID or a part fo the character-name
+*/
 bool ChatHandler::HandleCharacterDeletedDeleteCommand(const char* args)
 {
     // It is required to submit at least one argument
@@ -466,16 +466,16 @@ bool ChatHandler::HandleCharacterDeletedDeleteCommand(const char* args)
 }
 
 /**
- * Handles the '.character deleted old' command, which completely deletes all deleted characters deleted with some days ago
- *
- * @see Player::DeleteOldCharacters
- * @see Player::DeleteFromDB
- * @see ChatHandler::HandleCharacterDeletedDeleteCommand
- * @see ChatHandler::HandleCharacterDeletedListCommand
- * @see ChatHandler::HandleCharacterDeletedRestoreCommand
- *
- * @param args the search string which either contains a player GUID or a part fo the character-name
- */
+* Handles the '.character deleted old' command, which completely deletes all deleted characters deleted with some days ago
+*
+* @see Player::DeleteOldCharacters
+* @see Player::DeleteFromDB
+* @see ChatHandler::HandleCharacterDeletedDeleteCommand
+* @see ChatHandler::HandleCharacterDeletedListCommand
+* @see ChatHandler::HandleCharacterDeletedRestoreCommand
+*
+* @param args the search string which either contains a player GUID or a part fo the character-name
+*/
 bool ChatHandler::HandleCharacterDeletedOldCommand(const char* args)
 {
     int32 keepDays = sWorld->getConfig(CONFIG_CHARDELETE_KEEP_DAYS);
@@ -498,7 +498,7 @@ bool ChatHandler::HandleCharacterDeletedOldCommand(const char* args)
     return true;
 }
 
-bool ChatHandler::HandleCharacterEraseCommand(const char* args){
+bool ChatHandler::HandleCharacterEraseCommand(const char* args) {
     if (!*args)
         return false;
 
@@ -534,7 +534,7 @@ bool ChatHandler::HandleCharacterEraseCommand(const char* args){
     }
 
     std::string account_name;
-    sAccountMgr->GetName (account_id, account_name);
+	AccountMgr::GetName(account_id, account_name);
 
     Player::DeleteFromDB(character_guid, account_id, true, true);
     PSendSysMessage(LANG_CHARACTER_DELETED, character_name.c_str(), GUID_LOPART(character_guid), account_name.c_str(), account_id);
@@ -573,10 +573,10 @@ bool ChatHandler::HandleAccountOnlineListCommand(const char* /*args*/)
         // No SQL injection. account is uint32.
         QueryResult_AutoPtr resultLogin =
             LoginDatabase.PQuery("SELECT a.username, a.last_ip, aa.gmlevel, a.expansion "
-                                 "FROM account a "
-                                 "LEFT JOIN account_access aa "
-                                 "ON (a.id = aa.id) "
-                                 "WHERE a.id = '%u'", account);
+                "FROM account a "
+                "LEFT JOIN account_access aa "
+                "ON (a.id = aa.id) "
+                "WHERE a.id = '%u'", account);
         if (resultLogin)
         {
             Field *fieldsLogin = resultLogin->Fetch();
@@ -585,7 +585,7 @@ bool ChatHandler::HandleAccountOnlineListCommand(const char* /*args*/)
         }
         else
             PSendSysMessage(LANG_ACCOUNT_LIST_ERROR, name.c_str());
-    } while(resultDB->NextRow());
+    } while (resultDB->NextRow());
 
     return true;
 }
@@ -606,28 +606,28 @@ bool ChatHandler::HandleAccountCreateCommand(const char* args)
     std::string account_name = szAcc;
     std::string password = szPassword;
 
-    AccountOpResult result = sAccountMgr->CreateAccount(account_name, password);
+    AccountOpResult result = AccountMgr::CreateAccount(account_name, password);
     switch (result)
     {
-        case AOR_OK:
-            PSendSysMessage(LANG_ACCOUNT_CREATED, account_name.c_str());
-            break;
-        case AOR_NAME_TOO_LONG:
-            SendSysMessage(LANG_ACCOUNT_TOO_LONG);
-            SetSentErrorMessage(true);
-            return false;
-        case AOR_NAME_ALREDY_EXIST:
-            SendSysMessage(LANG_ACCOUNT_ALREADY_EXIST);
-            SetSentErrorMessage(true);
-            return false;
-        case AOR_DB_INTERNAL_ERROR:
-            PSendSysMessage(LANG_ACCOUNT_NOT_CREATED_SQL_ERROR, account_name.c_str());
-            SetSentErrorMessage(true);
-            return false;
-        default:
-            PSendSysMessage(LANG_ACCOUNT_NOT_CREATED, account_name.c_str());
-            SetSentErrorMessage(true);
-            return false;
+    case AOR_OK:
+        PSendSysMessage(LANG_ACCOUNT_CREATED, account_name.c_str());
+        break;
+    case AOR_NAME_TOO_LONG:
+        SendSysMessage(LANG_ACCOUNT_TOO_LONG);
+        SetSentErrorMessage(true);
+        return false;
+    case AOR_NAME_ALREADY_EXIST:
+        SendSysMessage(LANG_ACCOUNT_ALREADY_EXIST);
+        SetSentErrorMessage(true);
+        return false;
+    case AOR_DB_INTERNAL_ERROR:
+        PSendSysMessage(LANG_ACCOUNT_NOT_CREATED_SQL_ERROR, account_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
+    default:
+        PSendSysMessage(LANG_ACCOUNT_NOT_CREATED, account_name.c_str());
+        SetSentErrorMessage(true);
+        return false;
     }
 
     return true;
@@ -671,12 +671,12 @@ bool ChatHandler::HandleServerSetDiffTimeCommand(const char *args)
     if (!NewTimeStr)
         return false;
 
-    int32 NewTime =atoi(NewTimeStr);
+    int32 NewTime = atoi(NewTimeStr);
     if (NewTime < 0)
         return false;
 
     sWorld->SetRecordDiffInterval(NewTime);
-    printf( "Record diff every %u ms\n", NewTime);
+    printf("Record diff every %u ms\n", NewTime);
     return true;
 }
 
@@ -704,7 +704,7 @@ int kb_hit_return()
     tv.tv_usec = 0;
     FD_ZERO(&fds);
     FD_SET(STDIN_FILENO, &fds);
-    select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+    select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 #endif
@@ -722,8 +722,8 @@ void CliRunnable::run()
     if (ConfigMgr::GetBoolDefault("BeepAtStart", true))
         printf("\a");                                       // \a = Alert
 
-    // print this here the first time
-    // later it will be printed after command queue updates
+                                                            // print this here the first time
+                                                            // later it will be printed after command queue updates
     printf("SF>");
 
     ///- As long as the World is running (no World::m_stopEvent), get the command line and handle it
@@ -731,7 +731,7 @@ void CliRunnable::run()
     {
         fflush(stdout);
 
-        char *command_str ;             // = fgets(commandbuf, sizeof(commandbuf), stdin);
+        char *command_str;             // = fgets(commandbuf, sizeof(commandbuf), stdin);
 
 #if PLATFORM == PLATFORM_WINDOWS
         char commandbuf[256];
@@ -743,7 +743,7 @@ void CliRunnable::run()
 
         if (command_str != NULL)
         {
-            for (int x=0; command_str[x]; ++x)
+            for (int x = 0; command_str[x]; ++x)
                 if (command_str[x] == '\r' || command_str[x] == '\n')
                 {
                     command_str[x] = 0;
@@ -781,4 +781,3 @@ void CliRunnable::run()
     // End the database thread
     WorldDatabase.ThreadEnd();                                  // free mySQL thread resources
 }
-

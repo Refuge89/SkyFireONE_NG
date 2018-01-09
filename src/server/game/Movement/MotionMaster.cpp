@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -17,7 +17,6 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "MotionMaster.h"
 #include "CreatureAISelector.h"
 #include "Creature.h"
@@ -191,7 +190,7 @@ MotionMaster::MoveRandom(float spawndist)
 {
     if (i_owner->GetTypeId() == TYPEID_UNIT)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (GUID: %u) start moving random", i_owner->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (GUID: %u) start moving random", i_owner->GetGUIDLow());
         Mutate(new RandomMovementGenerator<Creature>(spawndist), MOTION_SLOT_IDLE);
     }
 }
@@ -206,7 +205,7 @@ MotionMaster::MoveTargetedHome()
 
     if (i_owner->GetTypeId() == TYPEID_UNIT)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) targeted home", i_owner->GetEntry(), i_owner->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) targeted home", i_owner->GetEntry(), i_owner->GetGUIDLow());
         Mutate(new HomeMovementGenerator<Creature>(), MOTION_SLOT_ACTIVE);
     }
     else
@@ -220,12 +219,12 @@ MotionMaster::MoveConfused()
 {
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) move confused", i_owner->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) move confused", i_owner->GetGUIDLow());
         Mutate(new ConfusedMovementGenerator<Player>(), MOTION_SLOT_CONTROLLED);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) move confused",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) move confused",
             i_owner->GetEntry(), i_owner->GetGUIDLow());
         Mutate(new ConfusedMovementGenerator<Creature>(), MOTION_SLOT_CONTROLLED);
     }
@@ -241,7 +240,7 @@ MotionMaster::MoveChase(Unit* target, float dist, float angle)
     i_owner->clearUnitState(UNIT_STAT_FOLLOW);
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) chase to %s (GUID: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) chase to %s (GUID: %u)",
             i_owner->GetGUIDLow(),
             target->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             target->GetTypeId() == TYPEID_PLAYER ? target->GetGUIDLow() : target->ToCreature()->GetDBTableGUIDLow());
@@ -249,7 +248,7 @@ MotionMaster::MoveChase(Unit* target, float dist, float angle)
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) chase to %s (GUID: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) chase to %s (GUID: %u)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(),
             target->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             target->GetTypeId() == TYPEID_PLAYER ? target->GetGUIDLow() : target->ToCreature()->GetDBTableGUIDLow());
@@ -267,14 +266,14 @@ MotionMaster::MoveFollow(Unit* target, float dist, float angle, MovementSlot slo
     i_owner->addUnitState(UNIT_STAT_FOLLOW);
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) follow to %s (GUID: %u)", i_owner->GetGUIDLow(),
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) follow to %s (GUID: %u)", i_owner->GetGUIDLow(),
             target->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             target->GetTypeId() == TYPEID_PLAYER ? target->GetGUIDLow() : target->ToCreature()->GetDBTableGUIDLow());
         Mutate(new TargetedMovementGenerator<Player>(*target, dist, angle), slot);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) follow to %s (GUID: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) follow to %s (GUID: %u)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(),
             target->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             target->GetTypeId() == TYPEID_PLAYER ? target->GetGUIDLow() : target->ToCreature()->GetDBTableGUIDLow());
@@ -287,12 +286,12 @@ MotionMaster::MovePoint(uint32 id, float x, float y, float z)
 {
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) targeted point (Id: %u X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), id, x, y, z);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) targeted point (Id: %u X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), id, x, y, z);
         Mutate(new PointMovementGenerator<Player>(id, x, y, z), MOTION_SLOT_ACTIVE);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) targeted point (ID: %u X: %f Y: %f Z: %f)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) targeted point (ID: %u X: %f Y: %f Z: %f)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), id, x, y, z);
         Mutate(new PointMovementGenerator<Creature>(id, x, y, z), MOTION_SLOT_ACTIVE);
     }
@@ -319,12 +318,12 @@ void MotionMaster::MoveJump(float x, float y, float z, float speedXY, float spee
     i_owner->m_TempSpeed = speedXY;
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) jump to point (X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), x, y, z);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) jump to point (X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), x, y, z);
         Mutate(new PointMovementGenerator<Player>(0, x, y, z), MOTION_SLOT_CONTROLLED);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) jump to point (X: %f Y: %f Z: %f)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) jump to point (X: %f Y: %f Z: %f)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), x, y, z);
         Mutate(new PointMovementGenerator<Creature>(0, x, y, z), MOTION_SLOT_CONTROLLED);
     }
@@ -342,12 +341,12 @@ MotionMaster::MoveCharge(float x, float y, float z, float speed, uint32 id)
     i_owner->m_TempSpeed = speed;
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) charge point (X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), x, y, z);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) charge point (X: %f Y: %f Z: %f)", i_owner->GetGUIDLow(), x, y, z);
         Mutate(new PointMovementGenerator<Player>(id, x, y, z), MOTION_SLOT_CONTROLLED);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) charge point (X: %f Y: %f Z: %f)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) charge point (X: %f Y: %f Z: %f)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), x, y, z);
         Mutate(new PointMovementGenerator<Creature>(id, x, y, z), MOTION_SLOT_CONTROLLED);
     }
@@ -370,7 +369,7 @@ MotionMaster::MoveSeekAssistance(float x, float y, float z)
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) seek assistance (X: %f Y: %f Z: %f)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) seek assistance (X: %f Y: %f Z: %f)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), x, y, z);
         i_owner->AttackStop();
         i_owner->ToCreature()->SetReactState(REACT_PASSIVE);
@@ -387,7 +386,7 @@ MotionMaster::MoveSeekAssistanceDistract(uint32 time)
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) is distracted after assistance call (Time: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) is distracted after assistance call (Time: %u)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), time);
         Mutate(new AssistanceDistractMovementGenerator(time), MOTION_SLOT_ACTIVE);
     }
@@ -404,14 +403,14 @@ MotionMaster::MoveFleeing(Unit* enemy, uint32 time)
 
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) flee from %s (GUID: %u)", i_owner->GetGUIDLow(),
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) flee from %s (GUID: %u)", i_owner->GetGUIDLow(),
             enemy->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             enemy->GetTypeId() == TYPEID_PLAYER ? enemy->GetGUIDLow() : enemy->ToCreature()->GetDBTableGUIDLow());
         Mutate(new FleeingMovementGenerator<Player>(enemy->GetGUID()), MOTION_SLOT_CONTROLLED);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) flee from %s (GUID: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) flee from %s (GUID: %u)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(),
             enemy->GetTypeId() == TYPEID_PLAYER ? "player" : "creature",
             enemy->GetTypeId() == TYPEID_PLAYER ? enemy->GetGUIDLow() : enemy->ToCreature()->GetDBTableGUIDLow());
@@ -427,7 +426,7 @@ MotionMaster::MoveTaxiFlight(uint32 path, uint32 pathnode)
 {
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) taxi to (Path %u node %u)", i_owner->GetGUIDLow(), path, pathnode);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) taxi to (Path %u node %u)", i_owner->GetGUIDLow(), path, pathnode);
         FlightPathMovementGenerator* mgen = new FlightPathMovementGenerator(path, pathnode);
         Mutate(mgen, MOTION_SLOT_CONTROLLED);
     }
@@ -446,11 +445,11 @@ MotionMaster::MoveDistract(uint32 timer)
 
     if (i_owner->GetTypeId() == TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Player (GUID: %u) distracted (timer: %u)", i_owner->GetGUIDLow(), timer);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player (GUID: %u) distracted (timer: %u)", i_owner->GetGUIDLow(), timer);
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) (timer: %u)",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature (Entry: %u GUID: %u) (timer: %u)",
             i_owner->GetEntry(), i_owner->GetGUIDLow(), timer);
     }
 
@@ -502,7 +501,7 @@ void MotionMaster::MovePath(uint32 path_id, bool repeatable)
         //Mutate(new WaypointMovementGenerator<Player>(path_id, repeatable)):
         Mutate(new WaypointMovementGenerator<Creature>(path_id, repeatable), MOTION_SLOT_IDLE);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "%s (GUID: %u) start moving over path(Id:%u, repeatable: %s)",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "%s (GUID: %u) start moving over path(Id:%u, repeatable: %s)",
         i_owner->GetTypeId() == TYPEID_PLAYER ? "Player" : "Creature",
         i_owner->GetGUIDLow(), path_id, repeatable ? "YES" : "NO");
 }

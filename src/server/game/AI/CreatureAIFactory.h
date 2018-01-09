@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -21,35 +21,62 @@
 #ifndef SKYFIRE_CREATUREAIFACTORY_H
 #define SKYFIRE_CREATUREAIFACTORY_H
 
-//#include "Policies/Singleton.h"
-#include "Dynamic/ObjectRegistry.h"
-#include "Dynamic/FactoryHolder.h"
+#include "ObjectRegistry.h"
+#include "FactoryHolder.h"
+#include "GameObjectAI.h"
 
 struct SelectableAI : public FactoryHolder<CreatureAI>, public Permissible<Creature>
 {
-    SelectableAI(const char *id) : FactoryHolder<CreatureAI>(id) {}
+    SelectableAI(const char* id) : FactoryHolder<CreatureAI>(id) {}
 };
 
 template<class REAL_AI>
 struct CreatureAIFactory : public SelectableAI
 {
-    CreatureAIFactory(const char *name) : SelectableAI(name) {}
+    CreatureAIFactory(const char* name) : SelectableAI(name) {}
 
-    CreatureAI* Create(void *) const;
+    CreatureAI* Create(void*) const;
 
-    int Permit(const Creature *c) const { return REAL_AI::Permissible(c); }
+    int Permit(const Creature* c) const { return REAL_AI::Permissible(c); }
 };
 
 template<class REAL_AI>
 inline CreatureAI*
-CreatureAIFactory<REAL_AI>::Create(void *data) const
+CreatureAIFactory<REAL_AI>::Create(void* data) const
 {
-    Creature* creature = reinterpret_cast<Creature *>(data);
+    Creature* creature = reinterpret_cast<Creature*>(data);
     return (new REAL_AI(creature));
 }
 
 typedef FactoryHolder<CreatureAI> CreatureAICreator;
 typedef FactoryHolder<CreatureAI>::FactoryHolderRegistry CreatureAIRegistry;
 typedef FactoryHolder<CreatureAI>::FactoryHolderRepository CreatureAIRepository;
-#endif
 
+//GO
+struct SelectableGameObjectAI : public FactoryHolder<GameObjectAI>, public Permissible<GameObject>
+{
+    SelectableGameObjectAI(const char* id) : FactoryHolder<GameObjectAI>(id) {}
+};
+
+template<class REAL_GO_AI>
+struct GameObjectAIFactory : public SelectableGameObjectAI
+{
+    GameObjectAIFactory(const char* name) : SelectableGameObjectAI(name) {}
+
+    GameObjectAI* Create(void*) const;
+
+    int Permit(const GameObject* g) const { return REAL_GO_AI::Permissible(g); }
+};
+
+template<class REAL_GO_AI>
+inline GameObjectAI*
+GameObjectAIFactory<REAL_GO_AI>::Create(void* data) const
+{
+    GameObject* go = reinterpret_cast<GameObject*>(data);
+    return (new REAL_GO_AI(go));
+}
+
+typedef FactoryHolder<GameObjectAI> GameObjectAICreator;
+typedef FactoryHolder<GameObjectAI>::FactoryHolderRegistry GameObjectAIRegistry;
+typedef FactoryHolder<GameObjectAI>::FactoryHolderRepository GameObjectAIRepository;
+#endif

@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2011-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,7 +48,7 @@ class ByteBufferPositionException : public ByteBufferException
     protected:
         void PrintError() const
         {
-            sLog->outError("Attempted to %s value with size: " SIZEFMTD" in ByteBuffer (pos: " SIZEFMTD" size: " SIZEFMTD") " ,
+            sLog->outError("Attempted to %s value with size: " SIZEFMTD" in ByteBuffer (pos: " SIZEFMTD " size: " SIZEFMTD") " ,
                 (_add ? "put" : "get"), ValueSize, Pos, Size);
         }
 
@@ -447,10 +448,10 @@ class ByteBuffer
             if (!sLog->IsOutDebug())                          // optimize disabled debug output
                 return;
 
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
             for (uint32 i = 0; i < size(); ++i)
                 sLog->outDebugInLine("%u - ", read<uint8>(i) );
-            sLog->outDebug (LOG_FILTER_NETWORKIO, " ");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, " ");
         }
 
         void textlike() const
@@ -458,10 +459,10 @@ class ByteBuffer
             if (!sLog->IsOutDebug())                          // optimize disabled debug output
                 return;
 
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
             for (uint32 i = 0; i < size(); ++i)
                 sLog->outDebugInLine("%c", read<uint8>(i) );
-            sLog->outDebug (LOG_FILTER_NETWORKIO, " ");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, " ");
         }
 
         void hexlike() const
@@ -470,7 +471,7 @@ class ByteBuffer
                 return;
 
             uint32 j = 1, k = 1;
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "STORAGE_SIZE: %lu", (unsigned long)size() );
 
             for (uint32 i = 0; i < size(); ++i)
             {

@@ -1,22 +1,22 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Boss_Mekgineer_Steamrigger
@@ -50,147 +50,141 @@ EndContentData */
 
 #define ENTRY_STREAMRIGGER_MECHANIC 17951
 
-struct boss_mekgineer_steamriggerAI : public ScriptedAI
+class boss_mekgineer_steamrigger : public CreatureScript
 {
-    boss_mekgineer_steamriggerAI(Creature *c) : ScriptedAI(c)
+public:
+    boss_mekgineer_steamrigger() : CreatureScript("boss_mekgineer_steamrigger") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        instance = c->GetInstanceScript();
-        HeroicMode = me->GetMap()->IsHeroic();
+        return new boss_mekgineer_steamriggerAI (pCreature);
     }
 
-    ScriptedInstance *instance;
-    bool HeroicMode;
-
-    uint32 Shrink_Timer;
-    uint32 Saw_Blade_Timer;
-    uint32 Electrified_Net_Timer;
-    bool Summon75;
-    bool Summon50;
-    bool Summon25;
-
-    void Reset()
+    struct boss_mekgineer_steamriggerAI : public ScriptedAI
     {
-        Shrink_Timer = 20000;
-        Saw_Blade_Timer = 15000;
-        Electrified_Net_Timer = 10000;
-
-        Summon75 = false;
-        Summon50 = false;
-        Summon25 = false;
-
-        if (instance && me->isAlive())
-            instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, NOT_STARTED);
-    }
-
-    void JustDied(Unit* Killer)
-    {
-        DoScriptText(SAY_DEATH, me);
-
-        if (instance)
-            instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, DONE);
-    }
-
-    void KilledUnit(Unit* victim)
-    {
-        switch (rand()%3)
+        boss_mekgineer_steamriggerAI(Creature *c) : ScriptedAI(c)
         {
-            case 0: DoScriptText(SAY_SLAY_1, me); break;
-            case 1: DoScriptText(SAY_SLAY_2, me); break;
-            case 2: DoScriptText(SAY_SLAY_3, me); break;
-        }
-    }
-
-    void EnterCombat(Unit *who)
-    {
-        switch (rand()%3)
-        {
-            case 0: DoScriptText(SAY_AGGRO_1, me); break;
-            case 1: DoScriptText(SAY_AGGRO_2, me); break;
-            case 2: DoScriptText(SAY_AGGRO_3, me); break;
+            pInstance = c->GetInstanceScript();
         }
 
-        if (instance)
-            instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, IN_PROGRESS);
-    }
+        InstanceScript *pInstance;
 
-    //no known summon spells exist
-    void SummonMechanichs()
-    {
-        DoScriptText(SAY_MECHANICS, me);
+        uint32 Shrink_Timer;
+        uint32 Saw_Blade_Timer;
+        uint32 Electrified_Net_Timer;
+        bool Summon75;
+        bool Summon50;
+        bool Summon25;
 
-        DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-        DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,-5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-        DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,-5,-5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-
-        if (rand()%2)
-            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 5,-7, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-        if (rand()%2)
-            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 7,-5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
-
-        if (Shrink_Timer <= diff)
+        void Reset()
         {
-            DoCast(me->getVictim(),SPELL_SUPER_SHRINK_RAY);
             Shrink_Timer = 20000;
-        } else Shrink_Timer -= diff;
-
-        if (Saw_Blade_Timer <= diff)
-        {
-            if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 1))
-                DoCast(pTarget, SPELL_SAW_BLADE);
-            else
-                DoCast(me->getVictim(),SPELL_SAW_BLADE);
-
             Saw_Blade_Timer = 15000;
-        } else Saw_Blade_Timer -= diff;
-
-        if (Electrified_Net_Timer <= diff)
-        {
-            DoCast(me->getVictim(),SPELL_ELECTRIFIED_NET);
             Electrified_Net_Timer = 10000;
-        }
-        else Electrified_Net_Timer -= diff;
 
-        if (!Summon75)
+            Summon75 = false;
+            Summon50 = false;
+            Summon25 = false;
+
+            if (pInstance)
+                pInstance->SetData(TYPE_MEKGINEER_STEAMRIGGER, NOT_STARTED);
+        }
+
+        void JustDied(Unit* /*Killer*/)
         {
-            if ((me->GetHealth()*100 / me->GetMaxHealth()) < 75)
-            {
-                SummonMechanichs();
-                Summon75 = true;
-            }
+            DoScriptText(SAY_DEATH, me);
+
+            if (pInstance)
+                pInstance->SetData(TYPE_MEKGINEER_STEAMRIGGER, DONE);
         }
 
-        if (!Summon50)
+        void KilledUnit(Unit* /*victim*/)
         {
-            if ((me->GetHealth()*100 / me->GetMaxHealth()) < 50)
-            {
-                SummonMechanichs();
-                Summon50 = true;
-            }
+            DoScriptText(RAND(SAY_SLAY_1,SAY_SLAY_2,SAY_SLAY_3), me);
         }
 
-        if (!Summon25)
+        void EnterCombat(Unit * /*who*/)
         {
-            if ((me->GetHealth()*100 / me->GetMaxHealth()) < 25)
-            {
-                SummonMechanichs();
-                Summon25 = true;
-            }
+            DoScriptText(RAND(SAY_AGGRO_1,SAY_AGGRO_2,SAY_AGGRO_3), me);
+
+            if (pInstance)
+                pInstance->SetData(TYPE_MEKGINEER_STEAMRIGGER, IN_PROGRESS);
         }
 
-        DoMeleeAttackIfReady();
-    }
+        //no known summon spells exist
+        void SummonMechanichs()
+        {
+            DoScriptText(SAY_MECHANICS, me);
+
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,5,5,0,0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,-5,5,0,0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,-5,-5,0,0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+
+            if (rand()%2)
+                DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,5,-7,0,0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            if (rand()%2)
+                DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC,7,-5,0,0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (Shrink_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SUPER_SHRINK_RAY);
+                Shrink_Timer = 20000;
+            } else Shrink_Timer -= diff;
+
+            if (Saw_Blade_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,1))
+                    DoCast(pTarget, SPELL_SAW_BLADE);
+                else
+                    DoCast(me->getVictim(), SPELL_SAW_BLADE);
+
+                Saw_Blade_Timer = 15000;
+            } else Saw_Blade_Timer -= diff;
+
+            if (Electrified_Net_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_ELECTRIFIED_NET);
+                Electrified_Net_Timer = 10000;
+            }
+            else Electrified_Net_Timer -= diff;
+
+            if (!Summon75)
+            {
+                if (HealthBelowPct(75))
+                {
+                    SummonMechanichs();
+                    Summon75 = true;
+                }
+            }
+
+            if (!Summon50)
+            {
+                if (HealthBelowPct(50))
+                {
+                    SummonMechanichs();
+                    Summon50 = true;
+                }
+            }
+
+            if (!Summon25)
+            {
+                if (HealthBelowPct(25))
+                {
+                    SummonMechanichs();
+                    Summon25 = true;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_boss_mekgineer_steamrigger(Creature* creature)
-{
-    return new boss_mekgineer_steamriggerAI (creature);
-}
 
 #define SPELL_DISPEL_MAGIC          17201
 #define SPELL_REPAIR                31532
@@ -199,85 +193,78 @@ CreatureAI* GetAI_boss_mekgineer_steamrigger(Creature* creature)
 #define MAX_REPAIR_RANGE            (13.0f)                 //we should be at least at this range for repair
 #define MIN_REPAIR_RANGE            (7.0f)                  //we can stop movement at this range to repair but not required
 
-struct mob_steamrigger_mechanicAI : public ScriptedAI
+class mob_steamrigger_mechanic : public CreatureScript
 {
-    mob_steamrigger_mechanicAI(Creature *c) : ScriptedAI(c)
+public:
+    mob_steamrigger_mechanic() : CreatureScript("mob_steamrigger_mechanic") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        instance = c->GetInstanceScript();
-        HeroicMode = me->GetMap()->IsHeroic();
+        return new mob_steamrigger_mechanicAI (pCreature);
     }
 
-    ScriptedInstance* instance;
-    bool HeroicMode;
-
-    uint32 Repair_Timer;
-
-    void Reset()
+    struct mob_steamrigger_mechanicAI : public ScriptedAI
     {
-        Repair_Timer = 2000;
-    }
-
-    void MoveInLineOfSight(Unit* who)
-    {
-        //react only if attacked
-        return;
-    }
-
-    void EnterCombat(Unit *who) { }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (Repair_Timer <= diff)
+        mob_steamrigger_mechanicAI(Creature *c) : ScriptedAI(c)
         {
-            if (instance && instance->GetData64(DATA_MEKGINEERSTEAMRIGGER) && instance->GetData(TYPE_MEKGINEER_STEAMRIGGER) == IN_PROGRESS)
+            pInstance = c->GetInstanceScript();
+        }
+
+        InstanceScript* pInstance;
+
+        uint32 Repair_Timer;
+
+        void Reset()
+        {
+            Repair_Timer = 2000;
+        }
+
+        void MoveInLineOfSight(Unit* /*who*/)
+        {
+            //react only if attacked
+        }
+
+        void EnterCombat(Unit * /*who*/) { }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (Repair_Timer <= diff)
             {
-                if (Unit* pMekgineer = Unit::GetUnit((*me), instance->GetData64(DATA_MEKGINEERSTEAMRIGGER)))
+                if (pInstance && pInstance->GetData64(DATA_MEKGINEERSTEAMRIGGER) && pInstance->GetData(TYPE_MEKGINEER_STEAMRIGGER) == IN_PROGRESS)
                 {
-                    if (me->IsWithinDistInMap(pMekgineer, MAX_REPAIR_RANGE))
+                    if (Unit* pMekgineer = Unit::GetUnit((*me), pInstance->GetData64(DATA_MEKGINEERSTEAMRIGGER)))
                     {
-                        //are we already channeling? Doesn't work very well, find better check?
-                        if (!me->GetUInt32Value(UNIT_CHANNEL_SPELL))
+                        if (me->IsWithinDistInMap(pMekgineer, MAX_REPAIR_RANGE))
+                        {
+                            //are we already channeling? Doesn't work very well, find better check?
+                            if (!me->GetUInt32Value(UNIT_CHANNEL_SPELL))
+                            {
+                                //me->GetMotionMaster()->MovementExpired();
+                                //me->GetMotionMaster()->MoveIdle();
+
+                                DoCast(me, SPELL_REPAIR, true);
+                            }
+                            Repair_Timer = 5000;
+                        }
+                        else
                         {
                             //me->GetMotionMaster()->MovementExpired();
-                            //me->GetMotionMaster()->MoveIdle();
-
-                            DoCast(me, HeroicMode ? H_SPELL_REPAIR : SPELL_REPAIR, true);
+                            //me->GetMotionMaster()->MoveFollow(pMekgineer,0,0);
                         }
-                        Repair_Timer = 5000;
                     }
-                    else
-                    {
-                        //me->GetMotionMaster()->MovementExpired();
-                        //me->GetMotionMaster()->MoveFollow(pMekgineer, 0, 0);
-                    }
-                }
-            } else Repair_Timer = 5000;
-        } else Repair_Timer -= diff;
+                } else Repair_Timer = 5000;
+            } else Repair_Timer -= diff;
 
-        if (!UpdateVictim())
-            return;
+            if (!UpdateVictim())
+                return;
 
-        DoMeleeAttackIfReady();
-    }
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_mob_steamrigger_mechanic(Creature* creature)
-{
-    return new mob_steamrigger_mechanicAI (creature);
-}
 
 void AddSC_boss_mekgineer_steamrigger()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "boss_mekgineer_steamrigger";
-    newscript->GetAI = &GetAI_boss_mekgineer_steamrigger;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "mob_steamrigger_mechanic";
-    newscript->GetAI = &GetAI_mob_steamrigger_mechanic;
-    newscript->RegisterSelf();
+    new boss_mekgineer_steamrigger();
+    new mob_steamrigger_mechanic();
 }
-

@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2011-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,7 +66,7 @@ Database::~Database()
 
 bool Database::Initialize(const char* infoString)
 {
-    // Enable logging of SQL commands (usally only GM commands)
+    // Enable logging of SQL commands (usually only GM commands)
     // (See method: PExecuteLog)
     m_logSQL = ConfigMgr::GetBoolDefault("LogSQL", false);
     m_logsDir = ConfigMgr::GetStringDefault("LogsDir","");
@@ -86,7 +87,7 @@ bool Database::Initialize(const char* infoString)
 
     InitDelayThread();
 
-    Tokens tokens = StrSplit(infoString, ";");
+    Tokens tokens(infoString, ';');
 
     Tokens::iterator iter;
 
@@ -273,7 +274,7 @@ bool Database::_Query(const char *sql, MYSQL_RES **pResult, MYSQL_FIELD **pField
         else
         {
             #ifdef SKYFIRE_DEBUG
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "[%u ms] SQL: %s", getMSTimeDiff(_s, getMSTime()), sql );
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "[%u ms] SQL: %s", getMSTimeDiff(_s, getMSTime()), sql );
             #endif
         }
 
@@ -454,7 +455,7 @@ bool Database::DirectExecute(const char* sql)
         else
         {
             #ifdef SKYFIRE_DEBUG
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "[%u ms] SQL: %s", getMSTimeDiff(_s, getMSTime()), sql);
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "[%u ms] SQL: %s", getMSTimeDiff(_s, getMSTime()), sql);
             #endif
         }
     }
@@ -528,7 +529,7 @@ bool Database::_TransactionCmd(const char* sql)
         return false;
     }
     else
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "SQL: %s", sql);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "SQL: %s", sql);
 
     return true;
 }

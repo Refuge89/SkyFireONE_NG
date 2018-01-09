@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -83,7 +83,7 @@ void WardenBase::HandleData(ByteBuffer &buff)
 
 void WardenBase::SendModuleToClient()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Send module to client");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Send module to client");
 
     // Create packet structure
     WardenModuleTransfer pkt;
@@ -109,7 +109,7 @@ void WardenBase::SendModuleToClient()
 
 void WardenBase::RequestModule()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request module");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request module");
 
     // Create packet structure
     WardenModuleUse Request;
@@ -178,7 +178,7 @@ bool WardenBase::IsValidCheckSum(uint32 checksum, const uint8 *Data, const uint1
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "CHECKSUM IS VALID");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "CHECKSUM IS VALID");
         return true;
     }
 }
@@ -198,7 +198,7 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& recv_data)
     m_Warden->DecryptData(const_cast<uint8*>(recv_data.contents()), recv_data.size());
     uint8 Opcode;
     recv_data >> Opcode;
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Got packet, opcode %02X, size %u", Opcode, recv_data.size());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Got packet, opcode %02X, size %u", Opcode, recv_data.size());
     recv_data.hexlike();
 
     switch(Opcode)
@@ -213,14 +213,14 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& recv_data)
             m_Warden->HandleData(recv_data);
             break;
         case WARDEN_CMSG_MEM_CHECKS_RESULT:
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "NYI WARDEN_CMSG_MEM_CHECKS_RESULT received!");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "NYI WARDEN_CMSG_MEM_CHECKS_RESULT received!");
             break;
         case WARDEN_CMSG_HASH_RESULT:
             m_Warden->HandleHashResult(recv_data);
             m_Warden->InitializeModule();
             break;
         case WARDEN_CMSG_MODULE_FAILED:
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "NYI WARDEN_CMSG_MODULE_FAILED received!");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "NYI WARDEN_CMSG_MODULE_FAILED received!");
             break;
         default:
             sLog->outError("Got unknown warden opcode %02X of size %u.", Opcode, recv_data.size() - 1);

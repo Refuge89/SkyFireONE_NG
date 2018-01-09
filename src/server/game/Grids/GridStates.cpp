@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -40,7 +40,7 @@ ActiveState::Update(Map &m, NGridType &grid, GridInfo & info, const uint32 &x, c
             ObjectGridStoper stoper(grid);
             stoper.StopN();
             grid.SetGridState(GRID_STATE_IDLE);
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Grid[%u, %u] on map %u moved to IDLE state", x, y, m.GetId());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Grid[%u, %u] on map %u moved to IDLE state", x, y, m.GetId());
         }
         else
         {
@@ -54,7 +54,7 @@ IdleState::Update(Map &m, NGridType &grid, GridInfo &, const uint32 &x, const ui
 {
     m.ResetGridExpiry(grid);
     grid.SetGridState(GRID_STATE_REMOVAL);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Grid[%u, %u] on map %u moved to REMOVAL state", x, y, m.GetId());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Grid[%u, %u] on map %u moved to REMOVAL state", x, y, m.GetId());
 }
 
 void
@@ -67,7 +67,7 @@ RemovalState::Update(Map &m, NGridType &grid, GridInfo &info, const uint32 &x, c
         {
             if (!m.UnloadGrid(x, y, false))
             {
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "Grid[%u, %u] for map %u differed unloading due to players or active objects nearby", x, y, m.GetId());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "Grid[%u, %u] for map %u differed unloading due to players or active objects nearby", x, y, m.GetId());
                 m.ResetGridExpiry(grid);
             }
         }

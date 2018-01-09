@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,6 +22,8 @@
 #define SKYFIRE_CHAT_H
 
 #include "SharedDefines.h"
+
+#include <vector>
 
 class ChatHandler;
 class WorldSession;
@@ -92,7 +94,8 @@ class ChatHandler
         void SendGlobalSysMessage(const char *str);
         void SendGlobalGMSysMessage(const char *str);
 
-        bool ExecuteCommandInTable(ChatCommand *table, const char* text, const std::string& fullcommand);
+        bool ExecuteCommandInTables(std::vector<ChatCommand*>& tables, const char* text, const std::string& fullcmd);
+        bool ExecuteCommandInTable(ChatCommand *table, const char* text, const std::string& fullcmd);
         bool ShowHelpForCommand(ChatCommand *table, const char* cmd);
         bool ShowHelpForSubCommands(ChatCommand *table, char const* cmd, char const* subcmd);
 
@@ -406,7 +409,7 @@ class ChatHandler
         bool HandleExploreCheatCommand(const char* args);
         bool HandleHoverCommand(const char* args);
         bool HandleWaterwalkCommand(const char* args);
-        bool HandleLevelUpCommand(const char* args);
+        //bool HandleLevelUpCommand(const char* args);  // FixMe
         bool HandleShowAreaCommand(const char* args);
         bool HandleHideAreaCommand(const char* args);
         bool HandleAddItemCommand(const char* args);

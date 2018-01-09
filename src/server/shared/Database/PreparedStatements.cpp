@@ -1,6 +1,8 @@
 /*
- * Copyright (C) 2011-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,7 +32,7 @@ void PreparedStatementHolder::_prepareStatement(const char* name, const char* sq
     strcat(query, sql);
     strcat(query, "'");
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Preparing statement: %s", query);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Preparing statement: %s", query);
     db->Execute(query);
 
     delete[] query;
@@ -50,7 +52,7 @@ void PreparedStatementHolder::Execute(Database* db, const char* name)
     strcpy(query, prefix);
     strcat(query, name);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Prepared statement: %s", query);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Prepared statement: %s", query);
     db->Execute(query);
     delete[] query;
 }
@@ -68,7 +70,7 @@ void PreparedStatementHolder::PExecute(Database* db, const char* name, const cha
     strcat(query, " USING ");
     strcat(query, args);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Prepared statement (parsed args): %s", query);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Prepared statement (parsed args): %s", query);
     db->Execute(query);
     delete[] query;
 }
@@ -83,7 +85,7 @@ QueryResult_AutoPtr PreparedStatementHolder::Query(Database* db, const char* nam
     strcpy(query, prefix);
     strcat(query, name);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Prepared statement with resultset: %s", query);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Prepared statement with resultset: %s", query);
     _return = db->Query(query);
     delete[] query;
     return _return;
@@ -104,7 +106,7 @@ QueryResult_AutoPtr PreparedStatementHolder::PQuery(Database* db, const char* na
     strcat(query, " USING ");
     strcat(query, args);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Prepared statement with resultset (parsed args): %s", query);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Prepared statement with resultset (parsed args): %s", query);
     _return = db->Query(query);
     delete[] query;
     return _return;

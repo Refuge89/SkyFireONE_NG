@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -66,16 +66,16 @@ void WardenWin::Init(WorldSession *pClient, BigNumber *K)
 
     iCrypto.Init(InputKey);
     oCrypto.Init(OutputKey);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Server side warden for client %u initializing...", pClient->GetAccountId());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  C->S Key: %s", ByteArrayToHexStr(InputKey, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  S->C Key: %s", ByteArrayToHexStr(OutputKey, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Seed: %s", ByteArrayToHexStr(Seed, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Loading Module...");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Server side warden for client %u initializing...", pClient->GetAccountId());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  C->S Key: %s", ByteArrayToHexStr(InputKey, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  S->C Key: %s", ByteArrayToHexStr(OutputKey, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Seed: %s", ByteArrayToHexStr(Seed, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Loading Module...");
 
     Module = GetModuleForClient(Client);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Module Key: %s", ByteArrayToHexStr(Module->Key, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Module ID: %s", ByteArrayToHexStr(Module->ID, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Module Key: %s", ByteArrayToHexStr(Module->Key, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Module ID: %s", ByteArrayToHexStr(Module->ID, 16).c_str());
     RequestModule();
 }
 
@@ -102,7 +102,7 @@ ClientWardenModule *WardenWin::GetModuleForClient(WorldSession *session)
 
 void WardenWin::InitializeModule()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Initialize module");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Initialize module");
 
     // Create packet structure
     WardenInitModuleRequest Request;
@@ -146,7 +146,7 @@ void WardenWin::InitializeModule()
 
 void WardenWin::RequestHash()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request hash");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request hash");
 
     // Create packet structure
     WardenHashRequest Request;
@@ -176,7 +176,7 @@ void WardenWin::HandleHashResult(ByteBuffer &buff)
         return;
     }
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request hash reply: succeed");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request hash reply: succeed");
 
     // client 7F96EEFDA5B63D20A4DF8E00CBF48304
     const uint8 client_key[16] = { 0x7F, 0x96, 0xEE, 0xFD, 0xA5, 0xB6, 0x3D, 0x20, 0xA4, 0xDF, 0x8E, 0x00, 0xCB, 0xF4, 0x83, 0x04 };
@@ -198,7 +198,7 @@ void WardenWin::HandleHashResult(ByteBuffer &buff)
 
 void WardenWin::RequestData()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request data");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request data");
 
     if (MemCheck.empty())
         MemCheck.assign(WardenDataStorage.MemCheckIds.begin(), WardenDataStorage.MemCheckIds.end());
@@ -325,12 +325,12 @@ void WardenWin::RequestData()
     stream << "Sent check id's: ";
     for (std::vector<uint32>::iterator itr = SendDataId.begin(); itr != SendDataId.end(); ++itr)
         stream << *itr << " ";
-    sLog->outDebug (LOG_FILTER_NETWORKIO, stream.str().c_str());
+    sLog->outDebug(LOG_FILTER_WARDEN, stream.str().c_str());
 }
 
 void WardenWin::HandleData(ByteBuffer &buff)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Handle data");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Handle data");
 
     m_WardenDataSent = false;
     m_WardenKickTimer = 0;
@@ -367,10 +367,10 @@ void WardenWin::HandleData(ByteBuffer &buff)
         uint32 ticksNow = getMSTime();
         uint32 ourTicks = newClientTicks + (ticksNow - ServerTicks);
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "ServerTicks %u", ticksNow);         // now
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "RequestTicks %u", ServerTicks);     // at request
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Ticks %u", newClientTicks);         // at response
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Ticks diff %u", ourTicks - newClientTicks);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "ServerTicks %u", ticksNow);         // now
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "RequestTicks %u", ServerTicks);     // at request
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Ticks %u", newClientTicks);         // at response
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Ticks diff %u", ourTicks - newClientTicks);
     }
 
     WardenDataResult *rs;
@@ -406,7 +406,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
                 }
 
                 buff.rpos(buff.rpos() + rd->Length);
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT MEM_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT MEM_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 break;
             }
             case PAGE_CHECK_A:
@@ -430,11 +430,11 @@ void WardenWin::HandleData(ByteBuffer &buff)
 
                 buff.rpos(buff.rpos() + 1);
                 if (type == PAGE_CHECK_A || type == PAGE_CHECK_B)
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT PAGE_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT PAGE_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 else if (type == MODULE_CHECK)
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT MODULE_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT MODULE_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 else if (type == DRIVER_CHECK)
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT DRIVER_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT DRIVER_CHECK passed CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 break;
             }
             case LUA_STR_CHECK:
@@ -457,11 +457,11 @@ void WardenWin::HandleData(ByteBuffer &buff)
                     char *str = new char[luaStrLen + 1];
                     memset(str, 0, luaStrLen + 1);
                     memcpy(str, buff.contents() + buff.rpos(), luaStrLen);
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Lua string: %s", str);
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Lua string: %s", str);
                     delete[] str;
                 }
                 buff.rpos(buff.rpos() + luaStrLen);         // skip string
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT LUA_STR_CHECK passed, CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT LUA_STR_CHECK passed, CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 break;
             }
             case MPQ_CHECK:
@@ -485,7 +485,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
                 }
 
                 buff.rpos(buff.rpos() + 20);                // 20 bytes SHA1
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "RESULT MPQ_CHECK passed, CheckId %u account Id %u", rd->id, Client->GetAccountId());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "RESULT MPQ_CHECK passed, CheckId %u account Id %u", rd->id, Client->GetAccountId());
                 break;
             }
             default:                                        // should never happens

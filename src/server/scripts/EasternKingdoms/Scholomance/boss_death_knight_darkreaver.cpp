@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -27,36 +27,37 @@ EndScriptData */
 
 #include "ScriptPCH.h"
 
-struct boss_death_knight_darkreaverAI : public ScriptedAI
+class boss_death_knight_darkreaver : public CreatureScript
 {
-    boss_death_knight_darkreaverAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_death_knight_darkreaver() : CreatureScript("boss_death_knight_darkreaver") { }
 
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
+        return new boss_death_knight_darkreaverAI (pCreature);
     }
 
-    void DamageTaken(Unit * /*done_by*/, uint32 &damage)
+    struct boss_death_knight_darkreaverAI : public ScriptedAI
     {
-        if (me->GetHealth() <= damage)
-            DoCast(me, 23261, true);   //Summon Darkreaver's Fallen Charger
-    }
+        boss_death_knight_darkreaverAI(Creature *c) : ScriptedAI(c) {}
 
-    void EnterCombat(Unit * /*who*/)
-    {
-    }
+        void Reset()
+        {
+        }
+
+        void DamageTaken(Unit * /*done_by*/, uint32 &damage)
+        {
+            if (me->GetHealth() <= damage)
+                DoCast(me, 23261, true);   //Summon Darkreaver's Fallen Charger
+        }
+
+        void EnterCombat(Unit * /*who*/)
+        {
+        }
+    };
 };
-CreatureAI* GetAI_boss_death_knight_darkreaver(Creature* creature)
-{
-    return new boss_death_knight_darkreaverAI (creature);
-}
 
 void AddSC_boss_death_knight_darkreaver()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "boss_death_knight_darkreaver";
-    newscript->GetAI = &GetAI_boss_death_knight_darkreaver;
-    newscript->RegisterSelf();
+    new boss_death_knight_darkreaver();
 }
-

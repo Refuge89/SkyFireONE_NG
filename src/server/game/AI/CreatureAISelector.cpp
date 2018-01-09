@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,6 +26,7 @@
 #include "TemporarySummon.h"
 #include "CreatureAIFactory.h"
 #include "ScriptMgr.h"
+#include "GameObjectAI.h"
 
 namespace FactorySelector
 {
@@ -39,7 +40,7 @@ namespace FactorySelector
 
         //scriptname in db
         if (!ai_factory)
-            if (CreatureAI* scriptedAI = sScriptMgr->GetAI(creature))
+            if (CreatureAI* scriptedAI = sScriptMgr->GetCreatureAI(creature))
                 return scriptedAI;
 
         // AIname in db
@@ -94,7 +95,7 @@ namespace FactorySelector
         // select NullCreatureAI if not another cases
         ainame = (ai_factory == NULL) ? "NullCreatureAI" : ai_factory->key();
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Creature %u used AI is %s.", creature->GetGUIDLow(), ainame.c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Creature %u used AI is %s.", creature->GetGUIDLow(), ainame.c_str());
         return (ai_factory == NULL ? new NullCreatureAI(creature) : ai_factory->Create(creature));
     }
 
@@ -125,5 +126,28 @@ namespace FactorySelector
 
         return (mv_factory == NULL ? NULL : mv_factory->Create(creature));
     }
-}
 
+    GameObjectAI* SelectGameObjectAI(GameObject* go)
+    {
+        const GameObjectAICreator* ai_factory = NULL;
+        GameObjectAIRegistry& ai_registry(*GameObjectAIRepository::instance());
+
+        if (GameObjectAI* scriptedAI = sScriptMgr->GetGameObjectAI(go))
+            return scriptedAI;
+
+        ai_factory = ai_registry.GetRegistryItem(go->GetAIName());
+
+        // scriptname in db
+        if (!ai_factory)
+            if (GameObjectAI* scriptedAI = sScriptMgr->GetGameObjectAI(go))
+                return scriptedAI;
+
+        //future goAI types go here
+
+        std::string ainame = (ai_factory == NULL || go->GetScriptId()) ? "NullGameObjectAI" : ai_factory->key();
+
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "GameObject %u used AI is %s.", go->GetGUIDLow(), ainame.c_str());
+
+        return (ai_factory == NULL ? new NullGameObjectAI(go) : ai_factory->Create(go));
+    }
+}

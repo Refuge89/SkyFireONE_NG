@@ -1,110 +1,108 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "blackfathom_deeps.h"
 
 enum Spells
 {
-    SPELL_MIND_BLAST                                       = 15587,
-    SPELL_SLEEP                                            = 8399,
+    SPELL_MIND_BLAST        = 15587,
+    SPELL_SLEEP             = 8399,
+
+    SAY_AGGRO               = 0,
+    SAY_SLEEP               = 1,
+    SAY_DEATH               = 2
 };
 
-//Id's from ACID
-enum Yells
+class boss_kelris : public CreatureScript
 {
-    SAY_AGGRO                                              = -1048002,
-    SAY_SLEEP                                              = -1048001,
-    SAY_DEATH                                              = -1048000
-};
+public:
+    boss_kelris() : CreatureScript("boss_kelris") { }
 
-struct boss_kelrisAI : public ScriptedAI
-{
-    boss_kelrisAI(Creature *c) : ScriptedAI(c)
+    CreatureAI* GetAI(Creature* creature) const
     {
-        instance = c->GetInstanceScript();
+        return new boss_kelrisAI (creature);
     }
 
-    uint32 uiMindBlastTimer;
-    uint32 uiSleepTimer;
-
-    ScriptedInstance *instance;
-
-    void Reset()
+    struct boss_kelrisAI : public ScriptedAI
     {
-        uiMindBlastTimer = urand(2000, 5000);
-        uiSleepTimer = urand(9000, 12000);
-        if (instance)
-            instance->SetData(TYPE_KELRIS, NOT_STARTED);
-    }
-
-    void EnterCombat(Unit* /*who*/)
-    {
-        DoScriptText(SAY_AGGRO, me);
-        if (instance)
-            instance->SetData(TYPE_KELRIS, IN_PROGRESS);
-    }
-
-    void JustDied(Unit* /*killer*/)
-    {
-        DoScriptText(SAY_DEATH, me);
-        if (instance)
-            instance->SetData(TYPE_KELRIS, DONE);
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
-
-        if (uiMindBlastTimer < diff)
+        boss_kelrisAI(Creature* creature) : ScriptedAI(creature)
         {
-            DoCastVictim(SPELL_MIND_BLAST);
-            uiMindBlastTimer = urand(7000, 9000);
-        } else uiMindBlastTimer -= diff;
+            instance = creature->GetInstanceScript();
+        }
 
-        if (uiSleepTimer < diff)
+        uint32 mindBlastTimer;
+        uint32 sleepTimer;
+
+        InstanceScript* instance;
+
+        void Reset()
         {
-            if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+            mindBlastTimer = urand(2000, 5000);
+            sleepTimer = urand(9000, 12000);
+            if (instance)
+                instance->SetData(TYPE_KELRIS, NOT_STARTED);
+        }
+
+        void EnterCombat(Unit* /*who*/)
+        {
+            Talk(SAY_AGGRO);
+            if (instance)
+                instance->SetData(TYPE_KELRIS, IN_PROGRESS);
+        }
+
+        void JustDied(Unit* /*killer*/)
+        {
+            Talk(SAY_DEATH);
+            if (instance)
+                instance->SetData(TYPE_KELRIS, DONE);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (mindBlastTimer < diff)
             {
-                DoScriptText(SAY_SLEEP, me);
-                DoCast(pTarget, SPELL_SLEEP);
-            }
-            uiSleepTimer = urand(15000, 20000);
-        } else uiSleepTimer -= diff;
+                DoCastVictim(SPELL_MIND_BLAST);
+                mindBlastTimer = urand(7000, 9000);
+            } else mindBlastTimer -= diff;
 
-        DoMeleeAttackIfReady();
-    }
+            if (sleepTimer < diff)
+            {
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                {
+                    Talk(SAY_SLEEP);
+                    DoCast(target, SPELL_SLEEP);
+                }
+                sleepTimer = urand(15000, 20000);
+            } else sleepTimer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_boss_kelris(Creature* creature)
-{
-    return new boss_kelrisAI (creature);
-}
 
 void AddSC_boss_kelris()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "boss_kelris";
-    newscript->GetAI = &GetAI_boss_kelris;
-    newscript->RegisterSelf();
+    new boss_kelris();
 }

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -27,7 +27,7 @@
 #include "DatabaseEnv.h"
 #include "SQLStorage.h"
 #include "DBCStores.h"
-
+#include "ScriptMgr.h"
 #include "AccountMgr.h"
 #include "AuctionHouseMgr.h"
 #include "Item.h"
@@ -93,13 +93,13 @@ uint32 AuctionHouseMgr::GetAuctionDeposit(AuctionHouseEntry const* entry, uint32
         faction_pct = 0.0f;
         deposit = 0.0f;
     }
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "SellPrice:\t\t%u", MSV);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Deposit Percent:\t%f", faction_pct);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Auction Time1:\t\t%u", time);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Auction Time2:\t\t%u", MIN_AUCTION_TIME);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Auction Time3:\t\t%u", (time / MIN_AUCTION_TIME));
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Count:\t\t\t%u", pItem->GetCount());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Deposit:\t\t%f", deposit);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "SellPrice:\t\t%u", MSV);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Deposit Percent:\t%f", faction_pct);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Auction Time1:\t\t%u", time);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Auction Time2:\t\t%u", MIN_AUCTION_TIME);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Auction Time3:\t\t%u", (time / MIN_AUCTION_TIME));
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Count:\t\t\t%u", pItem->GetCount());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Deposit:\t\t%f", deposit);
     if (deposit > 0)
         return (uint32)deposit;
     else
@@ -130,7 +130,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction)
         else
         {
             bidder_accId = sObjectMgr->GetPlayerAccountIdByGUID(bidder_guid);
-            bidder_security = sAccountMgr->GetSecurity(bidder_accId);
+            bidder_security = AccountMgr::GetSecurity(bidder_accId);
 
             if (bidder_security > SEC_PLAYER) // not do redundant DB requests
             {
@@ -161,7 +161,7 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry *auction)
         msgAuctionWonBody.width(16);
         msgAuctionWonBody << std::right << std::hex << auction->owner;
         msgAuctionWonBody << std::dec << ":" << auction->bid << ":" << auction->buyout;
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "AuctionWon body string : %s", msgAuctionWonBody.str().c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "AuctionWon body string : %s", msgAuctionWonBody.str().c_str());
 
         // prepare mail data... :
         uint32 itemTextId = sObjectMgr->CreateItemText(msgAuctionWonBody.str());
@@ -201,7 +201,7 @@ void AuctionHouseMgr::SendAuctionSalePendingMail(AuctionEntry * auction)
         msgAuctionSalePendingBody << ":" << auction->deposit << ":" << auctionCut << ":0:";
         msgAuctionSalePendingBody << secsToTimeBitFields(distrTime);
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "AuctionSalePending body string : %s", msgAuctionSalePendingBody.str().c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "AuctionSalePending body string : %s", msgAuctionSalePendingBody.str().c_str());
 
         uint32 itemTextId = sObjectMgr->CreateItemText(msgAuctionSalePendingBody.str());
 
@@ -230,7 +230,7 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry * auction)
         auctionSuccessfulBody << std::dec << ":" << auction->bid << ":" << auction->buyout;
         auctionSuccessfulBody << ":" << auction->deposit << ":" << auctionCut;
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "AuctionSuccessful body string : %s", auctionSuccessfulBody.str().c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "AuctionSuccessful body string : %s", auctionSuccessfulBody.str().c_str());
 
         uint32 itemTextId = sObjectMgr->CreateItemText(auctionSuccessfulBody.str());
 
@@ -250,7 +250,8 @@ void AuctionHouseMgr::SendAuctionSuccessfulMail(AuctionEntry * auction)
 
 // does not clear ram
 void AuctionHouseMgr::SendAuctionExpiredMail(AuctionEntry * auction)
-{ // return an item in auction to its owner by mail
+{
+    //return an item in auction to its owner by mail
     Item *pItem = GetAItem(auction->item_guidlow);
     if (!pItem)
         return;
@@ -474,20 +475,25 @@ AuctionHouseEntry const* AuctionHouseMgr::GetAuctionHouseEntry(uint32 factionTem
 
     return sAuctionHouseStore.LookupEntry(houseid);
 }
-    void AuctionHouseObject::AddAuction(AuctionEntry *ah)
-    {
-        ASSERT(ah);
-        AuctionsMap[ah->Id] = ah;
-    }
 
-    bool AuctionHouseObject::RemoveAuction(AuctionEntry *auction, uint32 item_template)
-    {
-        bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
+void AuctionHouseObject::AddAuction(AuctionEntry* auction)
+{
+    ASSERT(auction);
 
-        // we need to delete the entry, it is not referenced any more
-        delete auction;
-        return wasInMap;
-    }
+    AuctionsMap[auction->Id] = auction;
+    sScriptMgr->OnAuctionAdd(this, auction);
+}
+
+bool AuctionHouseObject::RemoveAuction(AuctionEntry *auction, uint32 item_template)
+{
+    bool wasInMap = AuctionsMap.erase(auction->Id) ? true : false;
+
+    sScriptMgr->OnAuctionRemove(this, auction);
+
+    // we need to delete the entry, it is not referenced any more
+    delete auction;
+    return wasInMap;
+}
 
 void AuctionHouseObject::Update()
 {
@@ -512,7 +518,8 @@ void AuctionHouseObject::Update()
     {
         uint32 tmpdata = result->Fetch()->GetUInt32();
         expiredAuctions.push_back(tmpdata);
-    } while (result->NextRow());
+    } 
+    while (result->NextRow());
 
     while (!expiredAuctions.empty())
     {
@@ -529,7 +536,10 @@ void AuctionHouseObject::Update()
 
         ///- Either cancel the auction if there was no bidder
         if (auction->bidder == 0)
+        {
             sAuctionMgr->SendAuctionExpiredMail(auction);
+            sScriptMgr->OnAuctionExpire(this, auction);
+        }
         ///- Or perform the transaction
         else
         {
@@ -538,6 +548,7 @@ void AuctionHouseObject::Update()
             //we send the money to the seller
             sAuctionMgr->SendAuctionSuccessfulMail(auction);
             sAuctionMgr->SendAuctionWonMail(auction);
+            sScriptMgr->OnAuctionSuccessful(this, auction);
         }
 
         ///- In any case clear the auction

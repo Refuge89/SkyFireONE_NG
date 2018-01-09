@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -56,7 +56,7 @@ namespace VMAP
             void operator()(const Vector3& point, uint32 entry)
             {
 #ifdef VMAP_DEBUG
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "trying to intersect '%s'", prims[entry].name.c_str());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "trying to intersect '%s'", prims[entry].name.c_str());
 #endif
                 prims[entry].intersectPoint(point, aInfo);
             }
@@ -72,7 +72,7 @@ namespace VMAP
             void operator()(const Vector3& point, uint32 entry)
             {
 #ifdef VMAP_DEBUG
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "trying to intersect '%s'", prims[entry].name.c_str());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "trying to intersect '%s'", prims[entry].name.c_str());
 #endif
                 if (prims[entry].GetLocationInfo(point, locInfo))
                     result = true;
@@ -259,7 +259,7 @@ namespace VMAP
 
     bool StaticMapTree::InitMap(const std::string &fname, VMapManager2 *vm)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Initializing StaticMapTree '%s'", fname.c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Initializing StaticMapTree '%s'", fname.c_str());
         bool success = true;
         std::string fullname = iBasePath + fname;
         FILE *rf = fopen(fullname.c_str(), "rb");
@@ -287,12 +287,12 @@ namespace VMAP
             // only non-tiled maps have them, and if so exactly one (so far at least...)
             ModelSpawn spawn;
 #ifdef VMAP_DEBUG
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Map isTiled: %u", static_cast<uint32>(iIsTiled));
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Map isTiled: %u", static_cast<uint32>(iIsTiled));
 #endif
             if (!iIsTiled && ModelSpawn::readFromFile(rf, spawn))
             {
                 WorldModel *model = vm->acquireModelInstance(iBasePath, spawn.name);
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "StaticMapTree::InitMap(): loading %s", spawn.name.c_str());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "StaticMapTree::InitMap(): loading %s", spawn.name.c_str());
                 if (model)
                 {
                     // assume that global model always is the first and only tree value (could be improved...)
@@ -370,7 +370,7 @@ namespace VMAP
 #ifdef VMAP_DEBUG
                         if (referencedVal > iNTreeValues)
                         {
-                            sLog->outDebug (LOG_FILTER_NETWORKIO, "invalid tree element! (%u/%u)", referencedVal, iNTreeValues);
+                            sLog->outDebug(LOG_FILTER_NETWORKIO, "invalid tree element! (%u/%u)", referencedVal, iNTreeValues);
                             continue;
                         }
 #endif
@@ -382,9 +382,9 @@ namespace VMAP
                         ++iLoadedSpawns[referencedVal];
 #ifdef VMAP_DEBUG
                         if (iTreeValues[referencedVal].ID != spawn.ID)
-                            sLog->outDebug (LOG_FILTER_NETWORKIO, "Error: trying to load wrong spawn in node!");
+                            sLog->outDebug(LOG_FILTER_NETWORKIO, "Error: trying to load wrong spawn in node!");
                         else if (iTreeValues[referencedVal].name != spawn.name)
-                            sLog->outDebug (LOG_FILTER_NETWORKIO, "Error: name mismatch on GUID=%u", spawn.ID);
+                            sLog->outDebug(LOG_FILTER_NETWORKIO, "Error: name mismatch on GUID=%u", spawn.ID);
 #endif
                     }
                 }

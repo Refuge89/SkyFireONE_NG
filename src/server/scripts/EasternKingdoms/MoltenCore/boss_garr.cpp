@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -36,112 +36,115 @@ EndScriptData */
 #define SPELL_ERUPTION              19497
 #define SPELL_IMMOLATE              20294
 
-struct boss_garrAI : public ScriptedAI
+class boss_garr : public CreatureScript
 {
-    boss_garrAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_garr() : CreatureScript("boss_garr") { }
 
-    uint32 AntiMagicPulse_Timer;
-    uint32 MagmaShackles_Timer;
-    uint32 CheckAdds_Timer;
-    uint64 Add[8];
-    bool Enraged[8];
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        AntiMagicPulse_Timer = 25000;                       //These times are probably wrong
-        MagmaShackles_Timer = 15000;
-        CheckAdds_Timer = 2000;
+        return new boss_garrAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_garrAI : public ScriptedAI
     {
-    }
+        boss_garrAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
+        uint32 AntiMagicPulse_Timer;
+        uint32 MagmaShackles_Timer;
+        uint32 CheckAdds_Timer;
+        uint64 Add[8];
+        bool Enraged[8];
 
-        //AntiMagicPulse_Timer
-        if (AntiMagicPulse_Timer <= diff)
+        void Reset()
         {
-            DoCast(me, SPELL_ANTIMAGICPULSE);
-            AntiMagicPulse_Timer = 10000 + rand()%5000;
-        } else AntiMagicPulse_Timer -= diff;
-
-        //MagmaShackles_Timer
-        if (MagmaShackles_Timer <= diff)
-        {
-            DoCast(me, SPELL_MAGMASHACKLES);
-            MagmaShackles_Timer = 8000 + rand()%4000;
-        } else MagmaShackles_Timer -= diff;
-
-        DoMeleeAttackIfReady();
-    }
-};
-
-struct mob_fireswornAI : public ScriptedAI
-{
-    mob_fireswornAI(Creature *c) : ScriptedAI(c) {}
-
-    uint32 Immolate_Timer;
-
-    void Reset()
-    {
-        Immolate_Timer = 4000;                              //These times are probably wrong
-    }
-
-    void EnterCombat(Unit * /*who*/)
-    {
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
-
-        //Immolate_Timer
-        if (Immolate_Timer <= diff)
-        {
-             if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, SPELL_IMMOLATE);
-
-            Immolate_Timer = urand(5000, 10000);
-        } else Immolate_Timer -= diff;
-
-        //Cast Erruption and let them die
-        if (me->GetHealth() <= me->GetMaxHealth() * 0.10f)
-        {
-            DoCast(me->getVictim(), SPELL_ERUPTION);
-            me->setDeathState(JUST_DIED);
-            me->RemoveCorpse();
+            AntiMagicPulse_Timer = 25000;                       //These times are probably wrong
+            MagmaShackles_Timer = 15000;
+            CheckAdds_Timer = 2000;
         }
 
-        DoMeleeAttackIfReady();
-    }
-};
-CreatureAI* GetAI_boss_garr(Creature* creature)
-{
-    return new boss_garrAI (creature);
-}
+        void EnterCombat(Unit * /*who*/)
+        {
+        }
 
-CreatureAI* GetAI_mob_firesworn(Creature* creature)
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            //AntiMagicPulse_Timer
+            if (AntiMagicPulse_Timer <= diff)
+            {
+                DoCast(me, SPELL_ANTIMAGICPULSE);
+                AntiMagicPulse_Timer = 10000 + rand()%5000;
+            } else AntiMagicPulse_Timer -= diff;
+
+            //MagmaShackles_Timer
+            if (MagmaShackles_Timer <= diff)
+            {
+                DoCast(me, SPELL_MAGMASHACKLES);
+                MagmaShackles_Timer = 8000 + rand()%4000;
+            } else MagmaShackles_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
+
+class mob_firesworn : public CreatureScript
 {
-    return new mob_fireswornAI (creature);
-}
+public:
+    mob_firesworn() : CreatureScript("mob_firesworn") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_fireswornAI (pCreature);
+    }
+
+    struct mob_fireswornAI : public ScriptedAI
+    {
+        mob_fireswornAI(Creature *c) : ScriptedAI(c) {}
+
+        uint32 Immolate_Timer;
+
+        void Reset()
+        {
+            Immolate_Timer = 4000;                              //These times are probably wrong
+        }
+
+        void EnterCombat(Unit * /*who*/)
+        {
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            //Immolate_Timer
+            if (Immolate_Timer <= diff)
+            {
+                 if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                    DoCast(pTarget, SPELL_IMMOLATE);
+
+                Immolate_Timer = urand(5000,10000);
+            } else Immolate_Timer -= diff;
+
+            //Cast Erruption and let them die
+            if (!HealthAbovePct(10))
+            {
+                DoCast(me->getVictim(), SPELL_ERUPTION);
+                me->setDeathState(JUST_DIED);
+                me->RemoveCorpse();
+            }
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
 
 void AddSC_boss_garr()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "boss_garr";
-    newscript->GetAI = &GetAI_boss_garr;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "mob_firesworn";
-    newscript->GetAI = &GetAI_mob_firesworn;
-    newscript->RegisterSelf();
+    new boss_garr();
+    new mob_firesworn();
 }
-

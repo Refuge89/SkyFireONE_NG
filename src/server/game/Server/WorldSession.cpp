@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -55,7 +55,6 @@ static bool MapSessionFilterHelper(WorldSession* session, OpcodeHandler const& o
     // in Map::Update() we do not process packets where player is not in world!
     return plr->IsInWorld();
 }
-
 
 bool MapSessionFilter::Process(WorldPacket * packet)
 {
@@ -232,7 +231,12 @@ bool WorldSession::Update(PacketFilter& updater)
                             LogUnexpectedOpcode(packet, "the player has not logged in yet");
                     }
                     else if (_player->IsInWorld())
-                        ExecuteOpcode(opHandle, packet);
+                    {
+                        sScriptMgr->OnPacketReceive(m_Socket, WorldPacket(*packet));
+                        (this->*opHandle.handler)(*packet);
+                        if (sLog->IsOutDebug() && packet->rpos() < packet->wpos())
+                            LogUnprocessedTail(packet);
+                    }
 
                     // lag can cause STATUS_LOGGEDIN opcodes to arrive after the player started a transfer
                     break;
@@ -242,8 +246,13 @@ bool WorldSession::Update(PacketFilter& updater)
                         LogUnexpectedOpcode(packet, "the player has not logged in yet and not recently logout");
                     }
                     else
+                    {
                         // not expected _player or must checked in packet hanlder
-                        ExecuteOpcode(opHandle, packet);
+                        sScriptMgr->OnPacketReceive(m_Socket, WorldPacket(*packet));
+                        (this->*opHandle.handler)(*packet);
+                        if (sLog->IsOutDebug() && packet->rpos() < packet->wpos())
+                            LogUnprocessedTail(packet);
+                    }
                     break;
                 case STATUS_TRANSFER_PENDING:
                     if (!_player)
@@ -251,7 +260,12 @@ bool WorldSession::Update(PacketFilter& updater)
                     else if (_player->IsInWorld())
                         LogUnexpectedOpcode(packet, "the player is still in world");
                     else
-                        ExecuteOpcode(opHandle, packet);
+                    {
+                        sScriptMgr->OnPacketReceive(m_Socket, WorldPacket(*packet));
+                        (this->*opHandle.handler)(*packet);
+                        if (sLog->IsOutDebug() && packet->rpos() < packet->wpos())
+                            LogUnprocessedTail(packet);
+                    }
                     break;
                 case STATUS_AUTHED:
                     // prevent cheating with skip queue wait
@@ -265,14 +279,17 @@ bool WorldSession::Update(PacketFilter& updater)
                     // and before other STATUS_LOGGEDIN_OR_RECENTLY_LOGGOUT opcodes.
                     if (packet->GetOpcode() != CMSG_SET_ACTIVE_VOICE_CHANNEL)
                         m_playerRecentlyLogout = false;
-
-                    ExecuteOpcode(opHandle, packet);
+                
+                    sScriptMgr->OnPacketReceive(m_Socket, WorldPacket(*packet));
+                    (this->*opHandle.handler)(*packet);
+                    if (sLog->IsOutDebug() && packet->rpos() < packet->wpos())
+                        LogUnprocessedTail(packet);
                     break;
                 case STATUS_NEVER:
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "SESSION: received not allowed opcode %s (0x%.4X)", LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "SESSION: received not allowed opcode %s (0x%.4X)", LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
                     break;
                 case STATUS_UNHANDLED:
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "SESSION: received not handled opcode %s (0x%.4X)", LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "SESSION: received not handled opcode %s (0x%.4X)", LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
                     break;
                 default:
                     sLog->outError("SESSION: received wrong-status-req opcode %s (0x%.4X)", LookupOpcodeName(packet->GetOpcode()), packet->GetOpcode());
@@ -284,7 +301,7 @@ bool WorldSession::Update(PacketFilter& updater)
             sLog->outError("WorldSession::Update ByteBufferException occurred while parsing a packet (opcode: %u) from client %s, accountid=%i. Skipped packet.", packet->GetOpcode(), GetRemoteAddress().c_str(), GetAccountId());
             if (sLog->IsOutDebug())
             {
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "Dumping error causing packet:");
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "Dumping error causing packet:");
                 packet->hexlike();
             }
         }
@@ -474,11 +491,8 @@ void WorldSession::LogoutPlayer(bool Save)
         //No SQL injection as AccountId is uint32
         CharacterDatabase.PExecute("UPDATE characters SET online = 0 WHERE account = '%u'",
             GetAccountId());
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "SESSION: Sent SMSG_LOGOUT_COMPLETE Message");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "SESSION: Sent SMSG_LOGOUT_COMPLETE Message");
     }
-
-    //Hook for OnLogout Event
-    sScriptMgr->OnLogout(_player);
 
     m_playerLogout = false;
     m_playerSave = false;

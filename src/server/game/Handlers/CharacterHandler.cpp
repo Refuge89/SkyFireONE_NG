@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -66,19 +66,11 @@ bool LoginQueryHolder::Initialize()
 
     // NOTE: all fields in `characters` must be read to prevent lost character data at next save in case wrong DB structure.
     // !!! NOTE: including unused `zone`, `online`
-    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADFROM,
-        "SELECT guid, account, data, name, race, class, gender, level, xp, "
-        "money, playerBytes, playerBytes2, playerFlags, position_x, "
-        "position_y, position_z, map, orientation, taximask, cinematic, "
-        "totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, "
-        "resettalents_cost, resettalents_time, trans_x, trans_y, trans_z, "
-        "trans_o, transguid, extra_flags, stable_slots, at_login, zone, "
-        "online, death_expire_time, taxi_path, dungeon_difficulty, "
-        "arenaPoints, totalHonorPoints, todayHonorPoints, "
-        "yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, "
-        "chosenTitle, watchedFaction, drunk, health, "
-        "powerMana, powerRage, powerFocus, powerEnergy, powerHappiness, instance_id "
-        "FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
+    res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADFROM,            "SELECT guid, account, name, race, class, gender, level, xp, money, playerBytes, playerBytes2, playerFlags,"
+        "position_x, position_y, position_z, map, orientation, taximask, cinematic, totaltime, leveltime, rest_bonus, logout_time, is_logout_resting, resettalents_cost,"
+        "resettalents_time, trans_x, trans_y, trans_z, trans_o, transguid, extra_flags, stable_slots, at_login, zone, online, death_expire_time, taxi_path, dungeon_difficulty,"
+        "arenaPoints, totalHonorPoints, todayHonorPoints, yesterdayHonorPoints, totalKills, todayKills, yesterdayKills, chosenTitle, knownCurrencies, watchedFaction, drunk,"
+        "health, powerMana, powerRage, powerFocus, powerEnergy, powerHappiness, instance_id, exploredZones, equipmentCache, ammoId, knownTitles FROM characters WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADGROUP,           "SELECT leaderGuid FROM group_member WHERE memberGuid ='%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADBOUNDINSTANCES,  "SELECT id, permanent, map, difficulty, resettime FROM character_instance LEFT JOIN instance ON instance = id WHERE guid = '%u'", GUID_LOPART(m_guid));
     res &= SetPQuery(PLAYER_LOGIN_QUERY_LOADAURAS,           "SELECT caster_guid, spell, effect_index, stackcount, amount, maxduration, remaintime, remaincharges FROM character_aura WHERE guid = '%u'", GUID_LOPART(m_guid));
@@ -167,7 +159,7 @@ void WorldSession::HandleCharEnumOpcode(WorldPacket & /*recv_data*/)
     //   8                9               10                     11                     12                     13                    14
         "characters.zone, characters.map, characters.position_x, characters.position_y, characters.position_z, guild_member.guildid, characters.playerFlags, "
     //  15                    16                   17                     18                   19
-        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.data "
+        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.equipmentCache "
         "FROM characters LEFT JOIN character_pet ON characters.guid=character_pet.owner AND character_pet.slot='0' "
         "LEFT JOIN guild_member ON characters.guid = guild_member.guid "
         "WHERE characters.account = '%u' ORDER BY characters.guid"
@@ -178,7 +170,7 @@ void WorldSession::HandleCharEnumOpcode(WorldPacket & /*recv_data*/)
     //   8                9               10                     11                     12                     13                    14
         "characters.zone, characters.map, characters.position_x, characters.position_y, characters.position_z, guild_member.guildid, characters.playerFlags, "
     //  15                    16                   17                     18                   19               20
-        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.data, character_declinedname.genitive "
+        "characters.at_login, character_pet.entry, character_pet.modelid, character_pet.level, characters.equipmentCache, character_declinedname.genitive "
         "FROM characters LEFT JOIN character_pet ON characters.guid = character_pet.owner AND character_pet.slot='0' "
         "LEFT JOIN character_declinedname ON characters.guid = character_declinedname.guid "
         "LEFT JOIN guild_member ON characters.guid = guild_member.guid "
@@ -451,7 +443,7 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recv_data)
     m_playerLoading = true;
     uint64 playerGuid = 0;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Recvd Player Logon Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd Player Logon Message");
 
     recv_data >> playerGuid;
 
@@ -540,13 +532,13 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
         data.put(0, linecount);
 
         SendPacket(&data);
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Sent motd (SMSG_MOTD)");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent motd (SMSG_MOTD)");
 
         // send server info
         if (sWorld->getConfig(CONFIG_ENABLE_SINFO_LOGIN) == 1)
             chH.PSendSysMessage(_FULLVERSION);
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Sent server info");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent server info");
     }
 
     QueryResult_AutoPtr resultGuild = holder->GetResult(PLAYER_LOGIN_QUERY_LOADGUILD);
@@ -573,7 +565,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
             data << uint8(1);
             data << guild->GetMOTD();
             SendPacket(&data);
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Sent guild-motd (SMSG_GUILD_EVENT)");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent guild-motd (SMSG_GUILD_EVENT)");
 
             data.Initialize(SMSG_GUILD_EVENT, (5+10));      // we guess size
             data<<(uint8)GE_SIGNED_ON;
@@ -581,7 +573,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
             data<<pCurrChar->GetName();
             data<<pCurrChar->GetGUID();
             guild->BroadcastPacket(&data);
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Sent guild-signed-on (SMSG_GUILD_EVENT)");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent guild-signed-on (SMSG_GUILD_EVENT)");
 
             // Increment online members of the guild
             guild->IncOnlineMemberCount();
@@ -625,7 +617,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
     }
 
     sObjectAccessor->AddObject(pCurrChar);
-    //sLog->outDebug (LOG_FILTER_NETWORKIO, "Player %s added to Map.", pCurrChar->GetName());
+    //sLog->outDebug(LOG_FILTER_NETWORKIO, "Player %s added to Map.", pCurrChar->GetName());
     pCurrChar->GetSocial()->SendSocialList();
 
     pCurrChar->SendInitialPacketsAfterAddToMap();
@@ -750,15 +742,12 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder * holder)
 
     m_playerLoading = false;
 
-    //Hook for OnLogin Event
-    sScriptMgr->OnLogin(pCurrChar);
-
     delete holder;
 }
 
 void WorldSession::HandleSetFactionAtWar(WorldPacket& recv_data)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_FACTION_ATWAR");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_FACTION_ATWAR");
 
     uint32 repListID;
     uint8  flag;
@@ -798,7 +787,7 @@ void WorldSession::HandleSetFactionCheat( WorldPacket & /*recv_data*/ )
 }
 void WorldSession::HandleMeetingStoneInfo(WorldPacket & /*recv_data*/)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_MEETING_STONE_INFO");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_MEETING_STONE_INFO");
 
     WorldPacket data(SMSG_MEETINGSTONE_SETQUEUE, 5);
     data << uint32(0) << uint8(6);
@@ -822,7 +811,7 @@ void WorldSession::HandleTutorialFlag(WorldPacket& recv_data)
     tutflag |= (1 << rInt);
     GetPlayer()->SetTutorialInt(wInt, tutflag);
 
-    //sLog->outDebug (LOG_FILTER_NETWORKIO, "Received Tutorial Flag Set {%u}.", iFlag);
+    //sLog->outDebug(LOG_FILTER_NETWORKIO, "Received Tutorial Flag Set {%u}.", iFlag);
 }
 
 void WorldSession::HandleTutorialClear(WorldPacket & /*recv_data*/)
@@ -839,7 +828,7 @@ void WorldSession::HandleTutorialReset(WorldPacket & /*recv_data*/)
 
 void WorldSession::HandleSetWatchedFactionIndexOpcode(WorldPacket& recv_data)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_WATCHED_FACTION");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_WATCHED_FACTION");
     int32 repId;
     recv_data >> repId;
     GetPlayer()->SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, repId);
@@ -847,7 +836,7 @@ void WorldSession::HandleSetWatchedFactionIndexOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleSetWatchedFactionInactiveOpcode(WorldPacket& recv_data)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_FACTION_INACTIVE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_FACTION_INACTIVE");
     uint32 replistid;
     uint8 inactive;
     recv_data >> replistid >> inactive;
@@ -857,13 +846,13 @@ void WorldSession::HandleSetWatchedFactionInactiveOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleToggleHelmOpcode(WorldPacket & /*recv_data*/)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "CMSG_TOGGLE_HELM for %s", _player->GetName());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_TOGGLE_HELM for %s", _player->GetName());
     _player->ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM);
 }
 
 void WorldSession::HandleToggleCloakOpcode(WorldPacket & /*recv_data*/)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "CMSG_TOGGLE_CLOAK for %s", _player->GetName());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_TOGGLE_CLOAK for %s", _player->GetName());
     _player->ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK);
 }
 

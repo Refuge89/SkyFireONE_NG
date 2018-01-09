@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -672,7 +672,7 @@ void WorldSession::HandleItemTextQuery(WorldPacket& recv_data)
 
     // TODO: some check needed, if player has item with guid mailId, or has mail with id mailId
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "CMSG_ITEM_TEXT_QUERY itemguid: %u, mailId: %u, unk: %u", itemTextId, mailId, unk);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_ITEM_TEXT_QUERY itemguid: %u, mailId: %u, unk: %u", itemTextId, mailId, unk);
 
     WorldPacket data(SMSG_ITEM_TEXT_QUERY_RESPONSE, (4+10));// guess size
     data << itemTextId;
@@ -1063,11 +1063,11 @@ void MailDraft::SendMailTo(MailReceiver const& receiver, MailSender const& sende
 
 void WorldSession::SendExternalMails()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "External Mail - Send Mails from Queue...");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "External Mail - Send Mails from Queue...");
     QueryResult_AutoPtr result = CharacterDatabase.Query("SELECT id, receiver, subject, message, money, item, item_count FROM mail_external");
         if (!result)
         {
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "External Mail - No Mails in Queue...");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "External Mail - No Mails in Queue...");
             return;
         }
         else
@@ -1087,7 +1087,7 @@ void WorldSession::SendExternalMails()
 
                 if (receiver != 0)
                 {
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "External Mail - Sending mail to %u, Item:%u", receiver_guid, ItemID);
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "External Mail - Sending mail to %u, Item:%u", receiver_guid, ItemID);
                     uint32 itemTextId = !message.empty() ? sObjectMgr->CreateItemText(message) : 0;
                     if (ItemID != 0)
                     {
@@ -1110,6 +1110,6 @@ void WorldSession::SendExternalMails()
             }
             while(result -> NextRow());
         }
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "External Mail - All Mails Sent...");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "External Mail - All Mails Sent...");
 }
 

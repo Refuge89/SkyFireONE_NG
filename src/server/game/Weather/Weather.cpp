@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,9 +26,10 @@
 #include "Log.h"
 #include "ObjectMgr.h"
 #include "Util.h"
+#include "ScriptMgr.h"
 
 // Create the Weather object
-Weather::Weather(uint32 zone, WeatherZoneChances const* weatherChances) : m_zone(zone), m_weatherChances(weatherChances)
+Weather::Weather(uint32 zone, WeatherData const* weatherChances) : m_zone(zone), m_weatherChances(weatherChances)
 {
     m_timer.SetInterval(sWorld->getConfig(CONFIG_INTERVAL_CHANGEWEATHER));
     m_type = WEATHER_TYPE_FINE;
@@ -42,7 +43,8 @@ bool Weather::Update(time_t diff)
 {
     if (m_timer.GetCurrent()>=0)
         m_timer.Update(diff);
-    else m_timer.SetCurrent(0);
+    else 
+        m_timer.SetCurrent(0);
 
     // If the timer has passed, ReGenerate the weather
     if (m_timer.Passed())
@@ -56,6 +58,8 @@ bool Weather::Update(time_t diff)
                 return false;
         }
     }
+
+    sScriptMgr->OnWeatherUpdate(this, diff);
     return true;
 }
 
@@ -91,7 +95,7 @@ bool Weather::ReGenerate()
 
     static char const* seasonName[WEATHER_SEASONS] = { "spring", "summer", "fall", "winter" };
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Generating a change in %s weather for zone %u.", seasonName[season], m_zone);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Generating a change in %s weather for zone %u.", seasonName[season], m_zone);
 
     if ((u < 60) && (m_grade < 0.33333334f))                // Get fair
     {
@@ -262,6 +266,7 @@ bool Weather::UpdateWeather()
     }
     sLog->outDetail("Change the weather of zone %u to %s.", m_zone, wthstr);
 
+    sScriptMgr->OnWeatherChange(this, state, m_grade);
     return true;
 }
 

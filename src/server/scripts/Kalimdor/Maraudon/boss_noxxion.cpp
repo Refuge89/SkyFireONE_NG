@@ -1,22 +1,22 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Boss_Noxxion
@@ -25,111 +25,119 @@ SDComment:
 SDCategory: Maraudon
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 
-#define SPELL_TOXICVOLLEY           21687
-#define SPELL_UPPERCUT              22916
-
-struct boss_noxxionAI : public ScriptedAI
+enum Spells
 {
-    boss_noxxionAI(Creature *c) : ScriptedAI(c) {}
+    SPELL_TOXICVOLLEY           = 21687,
+    SPELL_UPPERCUT              = 22916
+};
 
-    uint32 ToxicVolley_Timer;
-    uint32 Uppercut_Timer;
-    uint32 Adds_Timer;
-    uint32 Invisible_Timer;
-    bool Invisible;
+class boss_noxxion : public CreatureScript
+{
+public:
+    boss_noxxion() : CreatureScript("boss_noxxion") { }
 
-    void Reset()
+    CreatureAI* GetAI(Creature* creature) const
     {
-        ToxicVolley_Timer = 7000;
-        Uppercut_Timer = 16000;
-        Adds_Timer = 19000;
-        Invisible_Timer = 15000;                            //Too much too low?
-        Invisible = false;
+        return new boss_noxxionAI (creature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_noxxionAI : public ScriptedAI
     {
-    }
+        boss_noxxionAI(Creature* creature) : ScriptedAI(creature) {}
 
-    void SummonAdds(Unit* pVictim)
-    {
-        if (Creature *Add = DoSpawnCreature(13456, irand(-7, 7), irand(-7, 7), 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 90000))
-            Add->AI()->AttackStart(pVictim);
-    }
+        uint32 ToxicVolleyTimer;
+        uint32 UppercutTimer;
+        uint32 AddsTimer;
+        uint32 InvisibleTimer;
+        bool Invisible;
 
-    void UpdateAI(const uint32 diff)
-    {
-        if (Invisible && Invisible_Timer <= diff)
+        void Reset()
         {
-            //Become visible again
-            me->setFaction(14);
-            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            //Noxxion model
-            me->SetDisplayId(11172);
+            ToxicVolleyTimer = 7000;
+            UppercutTimer = 16000;
+            AddsTimer = 19000;
+            InvisibleTimer = 15000;                            //Too much too low?
             Invisible = false;
-            //me->m_canMove = true;
-        } else if (Invisible)
-        {
-            Invisible_Timer -= diff;
-            //Do nothing while invisible
-            return;
         }
 
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
+        void EnterCombat(Unit* /*who*/) {}
 
-        //ToxicVolley_Timer
-        if (ToxicVolley_Timer <= diff)
+        void SummonAdds(Unit* victim)
         {
-            DoCast(me->getVictim(), SPELL_TOXICVOLLEY);
-            ToxicVolley_Timer = 9000;
-        } else ToxicVolley_Timer -= diff;
+            if (Creature* Add = DoSpawnCreature(13456, float(irand(-7, 7)), float(irand(-7, 7)), 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 90000))
+                Add->AI()->AttackStart(victim);
+        }
 
-        //Uppercut_Timer
-        if (Uppercut_Timer <= diff)
+        void UpdateAI(const uint32 diff)
         {
-            DoCast(me->getVictim(), SPELL_UPPERCUT);
-            Uppercut_Timer = 12000;
-        } else Uppercut_Timer -= diff;
+            if (Invisible && InvisibleTimer <= diff)
+            {
+                //Become visible again
+                me->setFaction(14);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                //Noxxion model
+                me->SetDisplayId(11172);
+                Invisible = false;
+                //me->m_canMove = true;
+            }
+            else if (Invisible)
+            {
+                InvisibleTimer -= diff;
+                //Do nothing while invisible
+                return;
+            }
 
-        //Adds_Timer
-        if (!Invisible && Adds_Timer <= diff)
-        {
-            //Inturrupt any spell casting
-            //me->m_canMove = true;
-            me->InterruptNonMeleeSpells(false);
-            me->setFaction(35);
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            // Invisible Model
-            me->SetDisplayId(11686);
-            SummonAdds(me->getVictim());
-            SummonAdds(me->getVictim());
-            SummonAdds(me->getVictim());
-            SummonAdds(me->getVictim());
-            SummonAdds(me->getVictim());
-            Invisible = true;
-            Invisible_Timer = 15000;
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
 
-            Adds_Timer = 40000;
-        } else Adds_Timer -= diff;
+            //ToxicVolleyTimer
+            if (ToxicVolleyTimer <= diff)
+            {
+                DoCastVictim(SPELL_TOXICVOLLEY);
+                ToxicVolleyTimer = 9000;
+            }
+            else ToxicVolleyTimer -= diff;
 
-        DoMeleeAttackIfReady();
-    }
+            //UppercutTimer
+            if (UppercutTimer <= diff)
+            {
+                DoCastVictim(SPELL_UPPERCUT);
+                UppercutTimer = 12000;
+            }
+            else UppercutTimer -= diff;
+
+            //AddsTimer
+            if (!Invisible && AddsTimer <= diff)
+            {
+                //Interrupt any spell casting
+                //me->m_canMove = true;
+                me->InterruptNonMeleeSpells(false);
+                me->setFaction(35);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                // Invisible Model
+                me->SetDisplayId(11686);
+                SummonAdds(me->getVictim());
+                SummonAdds(me->getVictim());
+                SummonAdds(me->getVictim());
+                SummonAdds(me->getVictim());
+                SummonAdds(me->getVictim());
+                Invisible = true;
+                InvisibleTimer = 15000;
+
+                AddsTimer = 40000;
+            }
+            else AddsTimer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_noxxion(Creature* creature)
-{
-    return new boss_noxxionAI (creature);
-}
 
 void AddSC_boss_noxxion()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_noxxion";
-    newscript->GetAI = &GetAI_boss_noxxion;
-    newscript->RegisterSelf();
+    new boss_noxxion();
 }
-

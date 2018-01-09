@@ -1,22 +1,22 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Boss_Luetenant_Drake
@@ -25,7 +25,8 @@ SDComment: Missing proper code for patrolling area after being spawned. Script f
 SDCategory: Caverns of Time, Old Hillsbrad Foothills
 EndScriptData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 #include "old_hillsbrad.h"
 #include "ScriptedEscortAI.h"
 
@@ -33,37 +34,43 @@ EndScriptData */
 ## go_barrel_old_hillsbrad
 ######*/
 
-bool GOHello_go_barrel_old_hillsbrad(Player* player, GameObject* _GO)
+class go_barrel_old_hillsbrad : public GameObjectScript
 {
-    ScriptedInstance* instance = _GO->GetInstanceScript();
+public:
+    go_barrel_old_hillsbrad() : GameObjectScript("go_barrel_old_hillsbrad") { }
 
-    if (!instance)
+    bool OnGossipHello(Player* /*player*/, GameObject* go)
+    {
+        if (InstanceScript* instance = go->GetInstanceScript())
+        {
+            if (instance->GetData(TYPE_BARREL_DIVERSION) == DONE)
+                return false;
+
+            instance->SetData(TYPE_BARREL_DIVERSION, IN_PROGRESS);
+        }
+
         return false;
-
-    if (instance->GetData(TYPE_BARREL_DIVERSION) == DONE)
-        return false;
-
-    instance->SetData(TYPE_BARREL_DIVERSION, IN_PROGRESS);
-
-    return false;
-}
+    }
+};
 
 /*######
 ## boss_lieutenant_drake
 ######*/
 
-#define SAY_ENTER               -1560006
-#define SAY_AGGRO               -1560007
-#define SAY_SLAY1               -1560008
-#define SAY_SLAY2               -1560009
-#define SAY_MORTAL              -1560010
-#define SAY_SHOUT               -1560011
-#define SAY_DEATH               -1560012
+enum LieutenantDrake
+{
+    SAY_ENTER               = 0,
+    SAY_AGGRO               = 1,
+    SAY_SLAY                = 2,
+    SAY_MORTAL              = 3,
+    SAY_SHOUT               = 4,
+    SAY_DEATH               = 5,
 
-#define SPELL_WHIRLWIND         31909
-#define SPELL_HAMSTRING         9080
-#define SPELL_MORTAL_STRIKE     31911
-#define SPELL_FRIGHTENING_SHOUT 33789
+    SPELL_WHIRLWIND         = 31909,
+    SPELL_HAMSTRING         = 9080,
+    SPELL_MORTAL_STRIKE     = 31911,
+    SPELL_FRIGHTENING_SHOUT = 33789
+};
 
 struct Location
 {
@@ -96,105 +103,97 @@ static Location DrakeWP[]=
     {18, 2128.20f, 70.9763f, 64.4221f}
 };
 
-struct boss_lieutenant_drakeAI : public ScriptedAI
+class boss_lieutenant_drake : public CreatureScript
 {
-    boss_lieutenant_drakeAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_lieutenant_drake() : CreatureScript("boss_lieutenant_drake") { }
 
-    bool CanPatrol;
-    uint32 wpId;
-
-    uint32 Whirlwind_Timer;
-    uint32 Fear_Timer;
-    uint32 MortalStrike_Timer;
-    uint32 ExplodingShout_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* creature) const
     {
-        CanPatrol = true;
-        wpId = 0;
-
-        Whirlwind_Timer = 20000;
-        Fear_Timer = 30000;
-        MortalStrike_Timer = 45000;
-        ExplodingShout_Timer = 25000;
+        return new boss_lieutenant_drakeAI (creature);
     }
 
-    void EnterCombat(Unit *who)
+    struct boss_lieutenant_drakeAI : public ScriptedAI
     {
-        DoScriptText(SAY_AGGRO, me);
-    }
+        boss_lieutenant_drakeAI(Creature* creature) : ScriptedAI(creature) {}
 
-    void KilledUnit(Unit *victim)
-    {
-        switch (rand()%2)
+        bool CanPatrol;
+        uint32 wpId;
+
+        uint32 Whirlwind_Timer;
+        uint32 Fear_Timer;
+        uint32 MortalStrike_Timer;
+        uint32 ExplodingShout_Timer;
+
+        void Reset()
         {
-            case 0: DoScriptText(SAY_SLAY1, me); break;
-            case 1: DoScriptText(SAY_SLAY2, me); break;
-        }
-    }
+            CanPatrol = true;
+            wpId = 0;
 
-    void JustDied(Unit *victim)
-    {
-        DoScriptText(SAY_DEATH, me);
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        //TODO: make this work
-        if (CanPatrol && wpId == 0)
-        {
-            me->GetMotionMaster()->MovePoint(DrakeWP[0].wpId, DrakeWP[0].x, DrakeWP[0].y, DrakeWP[0].z);
-            wpId++;
+            Whirlwind_Timer = 20000;
+            Fear_Timer = 30000;
+            MortalStrike_Timer = 45000;
+            ExplodingShout_Timer = 25000;
         }
 
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
-
-        //Whirlwind
-        if (Whirlwind_Timer <= diff)
+        void EnterCombat(Unit* /*who*/)
         {
-            DoCast(me->getVictim(), SPELL_WHIRLWIND);
-            Whirlwind_Timer = 20000+rand()%5000;
-        } else Whirlwind_Timer -= diff;
+            Talk(SAY_AGGRO);
+        }
 
-        //Fear
-        if (Fear_Timer <= diff)
+        void KilledUnit(Unit* /*victim*/)
         {
-            DoScriptText(SAY_SHOUT, me);
-            DoCast(me->getVictim(), SPELL_FRIGHTENING_SHOUT);
-            Fear_Timer = 30000+rand()%10000;
-        } else Fear_Timer -= diff;
+            Talk(SAY_SLAY);
+        }
 
-        //Mortal Strike
-        if (MortalStrike_Timer <= diff)
+        void JustDied(Unit* /*killer*/)
         {
-            DoScriptText(SAY_MORTAL, me);
-            DoCast(me->getVictim(), SPELL_MORTAL_STRIKE);
-            MortalStrike_Timer = 45000+rand()%5000;
-        } else MortalStrike_Timer -= diff;
+            Talk(SAY_DEATH);
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void UpdateAI(const uint32 diff)
+        {
+            //TODO: make this work
+            if (CanPatrol && wpId == 0)
+            {
+                me->GetMotionMaster()->MovePoint(DrakeWP[0].wpId, DrakeWP[0].x, DrakeWP[0].y, DrakeWP[0].z);
+                ++wpId;
+            }
+
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //Whirlwind
+            if (Whirlwind_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_WHIRLWIND);
+                Whirlwind_Timer = 20000+rand()%5000;
+            } else Whirlwind_Timer -= diff;
+
+            //Fear
+            if (Fear_Timer <= diff)
+            {
+                Talk(SAY_SHOUT);
+                DoCast(me->getVictim(), SPELL_FRIGHTENING_SHOUT);
+                Fear_Timer = 25000+rand()%10000;
+            } else Fear_Timer -= diff;
+
+            //Mortal Strike
+            if (MortalStrike_Timer <= diff)
+            {
+                Talk(SAY_MORTAL);
+                DoCast(me->getVictim(), SPELL_MORTAL_STRIKE);
+                MortalStrike_Timer = 20000+rand()%10000;
+            } else MortalStrike_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_boss_lieutenant_drake(Creature* creature)
-{
-    return new boss_lieutenant_drakeAI (creature);
-}
 
 void AddSC_boss_lieutenant_drake()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "go_barrel_old_hillsbrad";
-    newscript->pGOHello = &GOHello_go_barrel_old_hillsbrad;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "boss_lieutenant_drake";
-    newscript->GetAI = &GetAI_boss_lieutenant_drake;
-    newscript->RegisterSelf();
+    new go_barrel_old_hillsbrad();
+    new boss_lieutenant_drake();
 }
-

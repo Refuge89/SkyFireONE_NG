@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,73 +37,74 @@ enum eEnums
     SPELL_FRENZY                 = 8269 //28371,
 };
 
-struct boss_vectusAI : public ScriptedAI
+class boss_vectus : public CreatureScript
 {
-    boss_vectusAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_vectus() : CreatureScript("boss_vectus") { }
 
-    uint32 m_uiFireShield_Timer;
-    uint32 m_uiBlastWave_Timer;
-    uint32 m_uiFrenzy_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        m_uiFireShield_Timer = 2000;
-        m_uiBlastWave_Timer = 14000;
-        m_uiFrenzy_Timer = 0;
+        return new boss_vectusAI (pCreature);
     }
 
-    void UpdateAI(const uint32 uiDiff)
+    struct boss_vectusAI : public ScriptedAI
     {
-        if (!UpdateVictim())
-            return;
+        boss_vectusAI(Creature *c) : ScriptedAI(c) {}
 
-        //FireShield_Timer
-        if (m_uiFireShield_Timer <= uiDiff)
+        uint32 m_uiFireShield_Timer;
+        uint32 m_uiBlastWave_Timer;
+        uint32 m_uiFrenzy_Timer;
+
+        void Reset()
         {
-            DoCast(me, SPELL_FIRESHIELD);
-            m_uiFireShield_Timer = 90000;
+            m_uiFireShield_Timer = 2000;
+            m_uiBlastWave_Timer = 14000;
+            m_uiFrenzy_Timer = 0;
         }
-        else
-            m_uiFireShield_Timer -= uiDiff;
 
-        //BlastWave_Timer
-        if (m_uiBlastWave_Timer <= uiDiff)
+        void UpdateAI(const uint32 uiDiff)
         {
-            DoCast(me->getVictim(), SPELL_BLAST_WAVE);
-            m_uiBlastWave_Timer = 12000;
-        }
-        else
-            m_uiBlastWave_Timer -= uiDiff;
+            if (!UpdateVictim())
+                return;
 
-        //Frenzy_Timer
-        if (me->GetHealth()*100 / me->GetMaxHealth() < 25)
-        {
-            if (m_uiFrenzy_Timer <= uiDiff)
+            //FireShield_Timer
+            if (m_uiFireShield_Timer <= uiDiff)
             {
-                DoCast(me, SPELL_FRENZY);
-                DoScriptText(EMOTE_GENERIC_FRENZY_KILL, me);
-
-                m_uiFrenzy_Timer = 24000;
+                DoCast(me, SPELL_FIRESHIELD);
+                m_uiFireShield_Timer = 90000;
             }
             else
-                m_uiFrenzy_Timer -= uiDiff;
+                m_uiFireShield_Timer -= uiDiff;
+
+            //BlastWave_Timer
+            if (m_uiBlastWave_Timer <= uiDiff)
+            {
+                DoCast(me->getVictim(), SPELL_BLAST_WAVE);
+                m_uiBlastWave_Timer = 12000;
+            }
+            else
+                m_uiBlastWave_Timer -= uiDiff;
+
+            //Frenzy_Timer
+            if (HealthBelowPct(25))
+            {
+                if (m_uiFrenzy_Timer <= uiDiff)
+                {
+                    DoCast(me, SPELL_FRENZY);
+                    DoScriptText(EMOTE_GENERIC_FRENZY_KILL, me);
+
+                    m_uiFrenzy_Timer = 24000;
+                }
+                else
+                    m_uiFrenzy_Timer -= uiDiff;
+            }
+
+            DoMeleeAttackIfReady();
         }
-
-        DoMeleeAttackIfReady();
-    }
+    };
 };
-
-CreatureAI* GetAI_boss_vectus(Creature* creature)
-{
-    return new boss_vectusAI (creature);
-}
 
 void AddSC_boss_vectus()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_vectus";
-    newscript->GetAI = &GetAI_boss_vectus;
-    newscript->RegisterSelf();
+    new boss_vectus();
 }
-

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -19,15 +19,13 @@
  */
 
 #include "Common.h"
-
 #include "Transport.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
 #include "Path.h"
-
+#include "ScriptMgr.h"
 #include "WorldPacket.h"
 #include "DBCStores.h"
-
 #include "World.h"
 
 void MapManager::LoadTransports()
@@ -53,7 +51,7 @@ void MapManager::LoadTransports()
         std::string name = fields[1].GetCppString();
         t->m_period = fields[2].GetUInt32();
 
-        const GameObjectInfo *goinfo = sObjectMgr->GetGameObjectInfo(entry);
+        const GameObjectTemplate *goinfo = sObjectMgr->GetGameObjectInfo(entry);
 
         if (!goinfo)
         {
@@ -144,7 +142,7 @@ bool Transport::Create(uint32 guidlow, uint32 mapid, float x, float y, float z, 
 
     Object::_Create(guidlow, 0, HIGHGUID_MO_TRANSPORT);
 
-    GameObjectInfo const* goinfo = sObjectMgr->GetGameObjectInfo(guidlow);
+    GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectInfo(guidlow);
 
     if (!goinfo)
     {
@@ -471,6 +469,8 @@ bool Transport::AddPassenger(Player* passenger)
         sLog->outDetail("Player %s boarded transport %s.", passenger->GetName(), GetName());
         m_passengers.insert(passenger);
     }
+    
+    sScriptMgr->OnAddPassenger(this, passenger);
     return true;
 }
 
@@ -478,6 +478,8 @@ bool Transport::RemovePassenger(Player* passenger)
 {
     if (m_passengers.erase(passenger))
         sLog->outDetail("Player %s removed from transport %s.", passenger->GetName(), GetName());
+       
+    sScriptMgr->OnRemovePassenger(this, passenger);
     return true;
 }
 
@@ -488,7 +490,7 @@ void Transport::CheckForEvent(uint32 entry, uint32 wp_id)
         GetMap()->ScriptsStart(sEventScripts, sObjectMgr->TransportEventMap[key], this, NULL);
 }
 
-void Transport::Update(uint32 /*p_time*/)
+void Transport::Update(uint32 p_diff)
 {
     if (m_WayPoints.size() <= 1)
         return;
@@ -520,10 +522,10 @@ void Transport::Update(uint32 /*p_time*/)
 
         m_nextNodeTime = m_curr->first;
 
-        if (m_curr == m_WayPoints.begin())
-            sLog->outDebug(LOG_FILTER_NETWORKIO, " ************ BEGIN ************** %s", m_name.c_str());
+		if (m_curr == m_WayPoints.begin())
+			sLog->outDebug(LOG_FILTER_TRANSPORTS, " ************ BEGIN ************** %s", m_name.c_str());
 
-        sLog->outDebug(LOG_FILTER_NETWORKIO, "%s moved to %d %f %f %f %d", this->m_name.c_str(), m_curr->second.id, m_curr->second.x, m_curr->second.y, m_curr->second.z, m_curr->second.mapid);
+		sLog->outDebug(LOG_FILTER_TRANSPORTS, "%s moved to %d %f %f %f %d", this->m_name.c_str(), m_curr->second.id, m_curr->second.x, m_curr->second.y, m_curr->second.z, m_curr->second.mapid);
 
         //Transport Event System
         CheckForEvent(this->GetEntry(), m_curr->second.id);

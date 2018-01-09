@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -454,6 +455,12 @@ class World
         Weather* AddWeather(uint32 zone_id);
         void RemoveWeather(uint32 zone_id);
 
+        // Deny clients?
+        bool IsClosed() const;
+
+        // Close world
+        void SetClosed(bool val);
+
         // Get the active session server limit (or security level limitations)
         AccountTypes GetPlayerSecurityLimit() const { return m_allowedSecurityLevel < 0 ? SEC_PLAYER : m_allowedSecurityLevel; }
         void SetPlayerSecurityLimit(AccountTypes sec) { m_allowedSecurityLevel = (sec < SEC_PLAYER ? SEC_PLAYER : sec); }
@@ -477,9 +484,9 @@ class World
         void SetAllowMovement(bool allow) { m_allowMovement = allow; }
 
         // Set a new Message of the Day
-        void SetMotd(std::string motd) { m_motd = motd; }
-        // Get the current Message of the Day
-        const char* GetMotd() const { return m_motd.c_str(); }
+        void SetMotd(const std::string& motd);
+        /// Get the current Message of the Day
+        const char* GetMotd() const;
 
         // Set the string for new characters (first login)
         void SetNewCharString(std::string str) { m_newCharString = str; }
@@ -527,7 +534,7 @@ class World
         void ShutdownMsg(bool show = false, Player* player = NULL);
         static uint8 GetExitCode() { return m_ExitCode; }
         static void StopNow(uint8 exitcode) { m_stopEvent = true; m_ExitCode = exitcode; }
-        static bool IsStopped() { return m_stopEvent; }
+        static bool IsStopped() { return m_stopEvent.value(); }
 
         void Update(time_t diff);
 
@@ -616,13 +623,14 @@ class World
         void InitDailyQuestResetTime();
         void ResetDailyQuests();
     private:
-        static volatile bool m_stopEvent;
+        //atomic op counter for active scripts amount
+        ACE_Atomic_Op<ACE_Thread_Mutex, long> m_scheduledScripts;        
+        static ACE_Atomic_Op<ACE_Thread_Mutex, bool> m_stopEvent;
         static uint8 m_ExitCode;
         uint32 m_ShutdownTimer;
         uint32 m_ShutdownMask;
 
-        //atomic op counter for active scripts amount
-        ACE_Atomic_Op<ACE_Thread_Mutex, long> m_scheduledScripts;
+        bool m_isClosed;
 
         time_t m_startTime;
         time_t m_gameTime;

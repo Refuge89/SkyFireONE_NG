@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -149,6 +149,7 @@ enum EUnitFields
     UNIT_FIELD_POWER_COST_MODIFIER            = OBJECT_END + 0x00D4, // Size: 7, Type: INT, Flags: PRIVATE, OWNER_ONLY
     UNIT_FIELD_POWER_COST_MULTIPLIER          = OBJECT_END + 0x00DB, // Size: 7, Type: FLOAT, Flags: PRIVATE, OWNER_ONLY
     UNIT_FIELD_MAXHEALTHMODIFIER              = OBJECT_END + 0x00E2, // Size: 1, Type: FLOAT, Flags: PRIVATE, OWNER_ONLY
+    UNIT_FIELD_HOVERHEIGHT                    = OBJECT_END + 0x008C, // Size: 1, Type: FLOAT, Flags: PUBLIC 
     UNIT_FIELD_PADDING                        = OBJECT_END + 0x00E3, // Size: 1, Type: INT, Flags: NONE
     UNIT_END                                  = OBJECT_END + 0x00E4,
 
@@ -342,7 +343,8 @@ enum EUnitFields
     PLAYER_FIELD_INV_SLOT_HEAD                = UNIT_END + 0x01A0, // Size: 46, Type: LONG, Flags: PRIVATE
     PLAYER_FIELD_PACK_SLOT_1                  = UNIT_END + 0x01CE, // Size: 32, Type: LONG, Flags: PRIVATE
     PLAYER_FIELD_BANK_SLOT_1                  = UNIT_END + 0x01EE, // Size: 56, Type: LONG, Flags: PRIVATE
-    PLAYER_FIELD_BANKBAG_SLOT_1               = UNIT_END + 0x0226, // Size: 14, Type: LONG, Flags: PRIVATE
+    PLAYER_FIELD_KNOWN_CURRENCIES             = UNIT_END + 0x01E4, // Size: 2, Type: LONG, Flags: PRIVATE    
+	PLAYER_FIELD_BANKBAG_SLOT_1               = UNIT_END + 0x0226, // Size: 14, Type: LONG, Flags: PRIVATE
     PLAYER_FIELD_VENDORBUYBACK_SLOT_1         = UNIT_END + 0x0234, // Size: 24, Type: LONG, Flags: PRIVATE
     PLAYER_FIELD_KEYRING_SLOT_1               = UNIT_END + 0x024C, // Size: 64, Type: LONG, Flags: PRIVATE
     PLAYER_FIELD_VANITYPET_SLOT_1             = UNIT_END + 0x028C, // Size: 36, Type: LONG, Flags: PRIVATE
@@ -393,8 +395,8 @@ enum EUnitFields
     PLAYER_FIELD_MOD_MANA_REGEN               = UNIT_END + 0x0532, // Size: 1, Type: FLOAT, Flags: PRIVATE
     PLAYER_FIELD_MOD_MANA_REGEN_INTERRUPT     = UNIT_END + 0x0533, // Size: 1, Type: FLOAT, Flags: PRIVATE
     PLAYER_FIELD_MAX_LEVEL                    = UNIT_END + 0x0534, // Size: 1, Type: INT, Flags: PRIVATE
-    PLAYER_FIELD_DAILY_QUESTS_1               = UNIT_END + 0x0535, // Size: 25, Type: INT, Flags: PRIVATE
-    PLAYER_END                                = UNIT_END + 0x054E,
+    PLAYER_FIELD_DAILY_QUESTS_1               = UNIT_END + 0x0535, // Size: 25, Type: INT, Flags: PRIVATE 
+	PLAYER_END                                = UNIT_END + 0x054E,
 };
 
 enum EGameObjectFields

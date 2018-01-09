@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -2871,7 +2871,7 @@ void Spell::SendSpellStart()
     if (!IsNeedSendToClient())
         return;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Sending SMSG_SPELL_START id=%u", m_spellInfo->Id);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Sending SMSG_SPELL_START id=%u", m_spellInfo->Id);
 
     uint32 castFlags = CAST_FLAG_UNKNOWN1;
     if (IsRangedSpell())
@@ -2904,7 +2904,7 @@ void Spell::SendSpellGo()
     if (!IsNeedSendToClient())
         return;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Sending SMSG_SPELL_GO id=%u", m_spellInfo->Id);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Sending SMSG_SPELL_GO id=%u", m_spellInfo->Id);
 
     Unit *target = m_targets.getUnitTarget() ? m_targets.getUnitTarget() : m_caster;
 
@@ -3407,7 +3407,7 @@ void Spell::HandleThreatSpells(uint32 spellId)
 
     m_targets.getUnitTarget()->AddThreat(m_caster, float(threatSpell->threat));
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr->GetSpellRank(spellId), threatSpell->threat);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell %u, rank %u, added an additional %i threat", spellId, sSpellMgr->GetSpellRank(spellId), threatSpell->threat);
 }
 
 void Spell::HandleEffects(Unit *pUnitTarget, Item *pItemTarget, GameObject *pGOTarget, uint32 i, float /*DamageMultiplier*/)
@@ -3418,20 +3418,20 @@ void Spell::HandleEffects(Unit *pUnitTarget, Item *pItemTarget, GameObject *pGOT
 
     uint8 eff = m_spellInfo->Effect[i];
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: Effect : %u", eff);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: Effect : %u", eff);
 
     //we do not need DamageMultiplier here.
     damage = CalculateDamage(i, NULL);
 
     if (eff<TOTAL_SPELL_EFFECTS)
     {
-        //sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Spell FX %d < TOTAL_SPELL_EFFECTS ", eff);
+        //sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Spell FX %d < TOTAL_SPELL_EFFECTS ", eff);
         (*this.*SpellEffects[eff])((SpellEffIndex)i);
     }
     /*
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Spell FX %d > TOTAL_SPELL_EFFECTS ", eff);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Spell FX %d > TOTAL_SPELL_EFFECTS ", eff);
         if (m_CastItem)
             EffectEnchantItemTmp(i);
         else
@@ -5074,7 +5074,7 @@ void Spell::DelayedChannel()
     else
         m_timer -= delaytime;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell %u partially interrupted for %i ms, new duration: %u ms", m_spellInfo->Id, delaytime, m_timer);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell %u partially interrupted for %i ms, new duration: %u ms", m_spellInfo->Id, delaytime, m_timer);
 
     for (std::list<TargetInfo>::iterator ihit= m_UniqueTargetInfo.begin();ihit != m_UniqueTargetInfo.end();++ihit)
     {

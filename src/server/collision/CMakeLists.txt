@@ -1,5 +1,5 @@
-# Copyright (C) 2011-2018 Project SkyFire <http://www.projectskyfire.org/>
-# Copyright (C) 2008-2018 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2011-20177 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -16,7 +16,6 @@ endif()
 file(GLOB_RECURSE sources_Management Management/*.cpp Management/*.h)
 file(GLOB_RECURSE sources_Maps Maps/*.cpp Maps/*.h)
 file(GLOB_RECURSE sources_Models Models/*.cpp Models/*.h)
-#file(GLOB_RECURSE sources_Pathfinding Pathfinding/*.cpp Pathfinding/*.h)  --NYI
 file(GLOB sources_localdir *.cpp *.h)
 
 if( USE_COREPCH AND MSVC )
@@ -31,7 +30,6 @@ set(collision_STAT_SRCS
   ${sources_Management}
   ${sources_Maps}
   ${sources_Models}
-#  ${sources_Pathfinding}  
   ${sources_localdir}
 )
 

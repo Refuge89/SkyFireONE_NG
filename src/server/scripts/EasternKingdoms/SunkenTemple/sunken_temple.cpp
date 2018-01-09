@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2013 kb_z
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -35,40 +36,37 @@ EndContentData */
 # at_malfurion_Stormrage_trigger
 #####*/
 
-bool AreaTrigger_at_malfurion_stormrage(Player* player, const AreaTriggerEntry * /*at*/)
+class at_malfurion_stormrage : public AreaTriggerScript
 {
-    if (ScriptedInstance* instance = player->GetInstanceScript())
+public:
+    at_malfurion_stormrage() : AreaTriggerScript("at_malfurion_stormrage") { }
+
+    bool OnTrigger(Player* pPlayer, const AreaTriggerEntry * /*at*/)
     {
-        if (!player->FindNearestCreature(15362, 15))
-            player->SummonCreature(15362, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), -1.52, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 100000);
+        if (pPlayer->GetInstanceScript() && !pPlayer->FindNearestCreature(15362, 15))
+            pPlayer->SummonCreature(15362, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), -1.52f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 100000);
         return false;
     }
-return false;
-}
+};
 /*#####
 # go_atalai_statue
 #####*/
 
-bool GOHello_go_atalai_statue(Player* player, GameObject* pGo)
+class go_atalai_statue : public GameObjectScript
 {
-    ScriptedInstance* instance = player->GetInstanceScript();
-    if (!instance)
+public:
+    go_atalai_statue() : GameObjectScript("go_atalai_statue") { }
+
+    bool OnGossipHello(Player* pPlayer, GameObject* pGo)
+    {
+        if (InstanceScript* pInstance = pPlayer->GetInstanceScript())
+            pInstance->SetData(EVENT_STATE,pGo->GetEntry());
         return false;
-    instance->SetData(EVENT_STATE, pGo->GetEntry());
-    return false;
-}
+    }
+};
 
 void AddSC_sunken_temple()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "at_malfurion_stormrage";
-    newscript->pAreaTrigger = &AreaTrigger_at_malfurion_stormrage;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "go_atalai_statue";
-    newscript->pGOHello = &GOHello_go_atalai_statue;
-    newscript->RegisterSelf();
+    new at_malfurion_stormrage();
+    new go_atalai_statue();
 }

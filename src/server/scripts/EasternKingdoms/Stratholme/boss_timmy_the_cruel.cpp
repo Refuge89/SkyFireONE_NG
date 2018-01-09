@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,57 +31,59 @@ EndScriptData */
 
 #define SPELL_RAVENOUSCLAW    17470
 
-struct boss_timmy_the_cruelAI : public ScriptedAI
+class boss_timmy_the_cruel : public CreatureScript
 {
-    boss_timmy_the_cruelAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_timmy_the_cruel() : CreatureScript("boss_timmy_the_cruel") { }
 
-    uint32 RavenousClaw_Timer;
-    bool HasYelled;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        RavenousClaw_Timer = 10000;
-        HasYelled = false;
+        return new boss_timmy_the_cruelAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_timmy_the_cruelAI : public ScriptedAI
     {
-        if (!HasYelled)
+        boss_timmy_the_cruelAI(Creature *c) : ScriptedAI(c) {}
+
+        uint32 RavenousClaw_Timer;
+        bool HasYelled;
+
+        void Reset()
         {
-            me->MonsterYell(SAY_SPAWN, LANG_UNIVERSAL, NULL);
-            HasYelled = true;
+            RavenousClaw_Timer = 10000;
+            HasYelled = false;
         }
-    }
 
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
-
-        //RavenousClaw
-        if (RavenousClaw_Timer <= diff)
+        void EnterCombat(Unit * /*who*/)
         {
-            //Cast
-            DoCast(me->getVictim(), SPELL_RAVENOUSCLAW);
-            //15 seconds until we should cast this again
-            RavenousClaw_Timer = 15000;
-        } else RavenousClaw_Timer -= diff;
+            if (!HasYelled)
+            {
+                me->MonsterYell(SAY_SPAWN,LANG_UNIVERSAL,NULL);
+                HasYelled = true;
+            }
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void UpdateAI(const uint32 diff)
+        {
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //RavenousClaw
+            if (RavenousClaw_Timer <= diff)
+            {
+                //Cast
+                DoCast(me->getVictim(), SPELL_RAVENOUSCLAW);
+                //15 seconds until we should cast this again
+                RavenousClaw_Timer = 15000;
+            } else RavenousClaw_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_timmy_the_cruel(Creature* creature)
-{
-    return new boss_timmy_the_cruelAI (creature);
-}
 
 void AddSC_boss_timmy_the_cruel()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_timmy_the_cruel";
-    newscript->GetAI = &GetAI_boss_timmy_the_cruel;
-    newscript->RegisterSelf();
+    new boss_timmy_the_cruel();
 }
-

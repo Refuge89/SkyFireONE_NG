@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -60,7 +61,7 @@
 #include "ScriptMgr.h"
 #include "WardenDataStorage.h"
 
-volatile bool World::m_stopEvent = false;
+ACE_Atomic_Op<ACE_Thread_Mutex, bool> World::m_stopEvent = false;
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
 volatile uint32 World::m_worldLoopCounter = 0;
 
@@ -99,6 +100,8 @@ World::World()
 
     m_updateTimeSum = 0;
     m_updateTimeCount = 0;
+
+    m_isClosed = false;
 }
 
 // World destructor
@@ -148,6 +151,31 @@ Player* World::FindPlayerInZone(uint32 zone)
         }
     }
     return NULL;
+}
+
+bool World::IsClosed() const
+{
+    return m_isClosed;
+}
+
+void World::SetClosed(bool val)
+{
+    m_isClosed = val;
+
+    // Invert the value, for simplicity for scripters.
+    sScriptMgr->OnOpenStateChange(!val);
+}
+
+void World::SetMotd(const std::string& motd)
+{
+    m_motd = motd;
+
+    sScriptMgr->OnMotdChange(m_motd);
+}
+
+const char* World::GetMotd() const
+{
+    return m_motd.c_str();
 }
 
 // Find a session by its id
@@ -383,7 +411,7 @@ void World::RemoveWeather(uint32 id)
 // Add a Weather object to the list
 Weather* World::AddWeather(uint32 zone_id)
 {
-    WeatherZoneChances const* weatherChances = sObjectMgr->GetWeatherChances(zone_id);
+    WeatherData const* weatherChances = sObjectMgr->GetWeatherChances(zone_id);
 
     // zone not have weather, ignore
     if (!weatherChances)
@@ -1097,6 +1125,8 @@ void World::LoadConfigSettings(bool reload)
     m_configs[CONFIG_WARDEN_NUM_CHECKS] = ConfigMgr::GetIntDefault("Warden.NumChecks", 3);
     m_configs[CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF] = ConfigMgr::GetIntDefault("Warden.ClientCheckHoldOff", 30);
     m_configs[CONFIG_WARDEN_CLIENT_RESPONSE_DELAY] = ConfigMgr::GetIntDefault("Warden.ClientResponseDelay", 15);
+
+    sScriptMgr->OnConfigLoad(reload);
 }
 
 // Initialize the World
@@ -1179,7 +1209,7 @@ void World::SetInitialWorldSettings()
     sObjectMgr->LoadPageTexts();
 
     sLog->outString("Loading Game Object Templates...");     // must be after LoadPageTexts
-    sObjectMgr->LoadGameobjectInfo();
+    sObjectMgr->LoadGameObjectTemplate();
 
     sLog->outString("Loading Spell Ranks Data...");
     sSpellMgr->LoadSpellRanks();
@@ -1426,23 +1456,15 @@ void World::SetInitialWorldSettings()
     CreatureEAI_Mgr->LoadCreatureEventAI_Scripts();
 
     sLog->outString("Initializing Scripts...");
-    sScriptMgr->ScriptsInit();
+    sScriptMgr->Initialize();
 
     // Initialize game time and timers
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "DEBUG:: Initialize game time and timers");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "DEBUG:: Initialize game time and timers");
     m_gameTime = time(NULL);
     m_startTime=m_gameTime;
 
-    tm local;
-    time_t curr;
-    time(&curr);
-    local=*(localtime(&curr));                              // dereference and assign
-    char isoDate[128];
-    sprintf(isoDate, "%04d-%02d-%02d %02d:%02d:%02d",
-        local.tm_year+1900, local.tm_mon+1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec);
-
-    LoginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, startstring, uptime, revision) VALUES('%u', " UI64FMTD ", '%s', 0, '%s')",
-        realmID, uint64(m_startTime), isoDate, _FULLVERSION);       // One-time query
+    LoginDatabase.PExecute("INSERT INTO uptime (realmid, starttime, uptime, revision) VALUES(%u, %u, 0, '%s')",
+        realmID, uint32(m_startTime), _FULLVERSION);       // One-time query
 
     m_timers[WUPDATE_AUTOBROADCAST].SetInterval(m_configs[CONFIG_AUTOBROADCAST_TIMER]);
     m_timers[WUPDATE_OBJECTS].SetInterval(IN_MILLISECONDS/2);
@@ -1468,7 +1490,7 @@ void World::SetInitialWorldSettings()
     mail_timer = ((((localtime(&m_gameTime)->tm_hour + 20) % 24)* HOUR * IN_MILLISECONDS) / m_timers[WUPDATE_AUCTIONS].GetInterval());
                                                             //1440
     mail_timer_expires = ((DAY * IN_MILLISECONDS) / (m_timers[WUPDATE_AUCTIONS].GetInterval()));
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Mail timer set to: %u, mail return is called every %u minutes", mail_timer, mail_timer_expires);
 
     // Initialize static helper structures
     AIRegistry::Initialize();
@@ -1629,7 +1651,7 @@ void World::LoadAutobroadcasts()
 // Update the World !
 void World::Update(time_t diff)
 {
-    m_updateTime = uint32(diff);
+    m_updateTime = diff;
     if (m_configs[CONFIG_INTERVAL_LOG_UPDATE])
     {
         if (m_updateTimeSum > m_configs[CONFIG_INTERVAL_LOG_UPDATE] && uint32(diff) >= m_configs[CONFIG_MIN_LOG_UPDATE])
@@ -1791,6 +1813,8 @@ void World::Update(time_t diff)
 
     // And last, but not least handle the issued cli commands
     ProcessCliCommands();
+
+    sScriptMgr->OnWorldUpdate(diff);
 }
 
 void World::ForceGameEventUpdate()
@@ -2105,7 +2129,7 @@ bool World::RemoveBanAccount(BanMode mode, std::string nameOrIP)
     {
         uint32 account = 0;
         if (mode == BAN_ACCOUNT)
-            account = sAccountMgr->GetId (nameOrIP);
+            account = AccountMgr::GetId (nameOrIP);
         else if (mode == BAN_CHARACTER)
             account = sObjectMgr->GetPlayerAccountIdByPlayerName (nameOrIP);
 
@@ -2127,7 +2151,7 @@ void World::_UpdateGameTime()
     m_gameTime = thisTime;
 
     // if there is a shutdown timer
-    if (!m_stopEvent && m_ShutdownTimer > 0 && elapsed > 0)
+    if (!IsStopped() && m_ShutdownTimer > 0 && elapsed > 0)
     {
         // ... and it is overdue, stop the world (set m_stopEvent)
         if (m_ShutdownTimer <= elapsed)
@@ -2147,17 +2171,17 @@ void World::_UpdateGameTime()
     }
 }
 
-// Shutdown the server
+/// Shutdown the server
 void World::ShutdownServ(uint32 time, uint32 options, uint8 exitcode)
 {
     // ignore if server shutdown at next tick
-    if (m_stopEvent)
+    if (IsStopped())
         return;
 
     m_ShutdownMask = options;
     m_ExitCode = exitcode;
 
-    // If the shutdown time is 0, set m_stopEvent (except if shutdown is 'idle' with remaining sessions)
+    ///- If the shutdown time is 0, set m_stopEvent (except if shutdown is 'idle' with remaining sessions)
     if (time == 0)
     {
         if (!(options & SHUTDOWN_MASK_IDLE) || GetActiveAndQueuedSessionCount() == 0)
@@ -2165,12 +2189,14 @@ void World::ShutdownServ(uint32 time, uint32 options, uint8 exitcode)
         else
             m_ShutdownTimer = 1;                            //So that the session count is re-evaluated at next world tick
     }
-    // Else set the shutdown timer and warn users
+    ///- Else set the shutdown timer and warn users
     else
     {
         m_ShutdownTimer = time;
         ShutdownMsg(true);
     }
+
+    sScriptMgr->OnShutdownInitiate(ShutdownExitCode(exitcode), ShutdownMask(options));
 }
 
 /// Display a shutdown message to the user(s)
@@ -2182,11 +2208,11 @@ void World::ShutdownMsg(bool show, Player* player)
 
     ///- Display a message every 12 hours, hours, 5 minutes, minute, 5 seconds and finally seconds
     if (show ||
-        (m_ShutdownTimer < 5* MINUTE && (m_ShutdownTimer % 15) == 0) || // < 5 min; every 15 sec
-        (m_ShutdownTimer < 15 * MINUTE && (m_ShutdownTimer % MINUTE) == 0) || // < 15 min ; every 1 min
-        (m_ShutdownTimer < 30 * MINUTE && (m_ShutdownTimer % (5 * MINUTE)) == 0) || // < 30 min ; every 5 min
-        (m_ShutdownTimer < 12 * HOUR && (m_ShutdownTimer % HOUR) == 0) || // < 12 h ; every 1 h
-        (m_ShutdownTimer > 12 * HOUR && (m_ShutdownTimer % (12 * HOUR)) == 0)) // > 12 h ; every 12 h
+        (m_ShutdownTimer < 5 * MINUTE && (m_ShutdownTimer % 15) == 0) || // < 5 min; every 15 sec
+        (m_ShutdownTimer < 15 * MINUTE && (m_ShutdownTimer % MINUTE) == 0) || // < 15 min; every 1 min
+        (m_ShutdownTimer < 30 * MINUTE && (m_ShutdownTimer % (5 * MINUTE)) == 0) || // < 30 min; every 5 min
+        (m_ShutdownTimer < 12 * HOUR && (m_ShutdownTimer % HOUR) == 0) || // < 12 h; every 1 h
+        (m_ShutdownTimer > 12 * HOUR && (m_ShutdownTimer % (12 * HOUR)) == 0)) // > 12 h; every 12 h
     {
         std::string str = secsToTimeString(m_ShutdownTimer);
 
@@ -2197,11 +2223,11 @@ void World::ShutdownMsg(bool show, Player* player)
     }
 }
 
-// Cancel a planned server shutdown
+/// Cancel a planned server shutdown
 void World::ShutdownCancel()
 {
     // nothing cancel or too later
-    if (!m_ShutdownTimer || m_stopEvent)
+    if (!m_ShutdownTimer || m_stopEvent.value())
         return;
 
     ServerMessageType msgid = (m_ShutdownMask & SHUTDOWN_MASK_RESTART) ? SERVER_MSG_RESTART_CANCELLED : SERVER_MSG_SHUTDOWN_CANCELLED;
@@ -2211,7 +2237,9 @@ void World::ShutdownCancel()
     m_ExitCode = SHUTDOWN_EXIT_CODE;                       // to default value
     SendServerMessage(msgid);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Server %s canceled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shutdown"));
+    sLog->outStaticDebug("Server %s cancelled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shuttingdown"));
+
+    sScriptMgr->OnShutdownCancel();
 }
 
 // Send a server message to the user(s)
@@ -2262,7 +2290,7 @@ void World::ProcessCliCommands()
     CliCommandHolder* command;
     while (cliCmdQueue.next(command))
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "CLI command under processing...");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "CLI command under processing...");
         zprint = command->m_print;
         callbackArg = command->m_callbackArg;
         CliHandler handler(callbackArg, zprint);
@@ -2382,7 +2410,7 @@ void World::UpdateAllowedSecurity()
      if (result)
      {
         m_allowedSecurityLevel = AccountTypes(result->Fetch()->GetUInt16());
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "Allowed Level: %u Result %u", m_allowedSecurityLevel, result->Fetch()->GetUInt16());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Allowed Level: %u Result %u", m_allowedSecurityLevel, result->Fetch()->GetUInt16());
      }
 }
 

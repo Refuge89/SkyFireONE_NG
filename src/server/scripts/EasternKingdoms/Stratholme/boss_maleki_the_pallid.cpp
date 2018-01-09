@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -33,80 +33,82 @@ EndScriptData */
 #define SPELL_DRAIN_MANA    17243
 #define SPELL_ICETOMB    16869
 
-struct boss_maleki_the_pallidAI : public ScriptedAI
+class boss_maleki_the_pallid : public CreatureScript
 {
-    boss_maleki_the_pallidAI(Creature *c) : ScriptedAI(c)
+public:
+    boss_maleki_the_pallid() : CreatureScript("boss_maleki_the_pallid") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        instance = me->GetInstanceScript();
+        return new boss_maleki_the_pallidAI (pCreature);
     }
 
-    ScriptedInstance* instance;
-
-    uint32 Frostbolt_Timer;
-    uint32 IceTomb_Timer;
-    uint32 DrainLife_Timer;
-
-    void Reset()
+    struct boss_maleki_the_pallidAI : public ScriptedAI
     {
-        Frostbolt_Timer = 1000;
-        IceTomb_Timer = 16000;
-        DrainLife_Timer = 31000;
-    }
-
-    void EnterCombat(Unit * /*who*/)
-    {
-    }
-
-    void JustDied(Unit* /*Killer*/)
-    {
-        if (instance)
-            instance->SetData(TYPE_PALLID, IN_PROGRESS);
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
-
-        //Frostbolt
-        if (Frostbolt_Timer <= diff)
+        boss_maleki_the_pallidAI(Creature *c) : ScriptedAI(c)
         {
-             if (rand()%100 < 90)
-                DoCast(me->getVictim(), SPELL_FROSTBOLT);
-            Frostbolt_Timer = 3500;
-        } else Frostbolt_Timer -= diff;
+            pInstance = me->GetInstanceScript();
+        }
 
-        //IceTomb
-        if (IceTomb_Timer <= diff)
-        {
-            if (rand()%100 < 65)
-                DoCast(me->getVictim(), SPELL_ICETOMB);
-            IceTomb_Timer = 28000;
-        } else IceTomb_Timer -= diff;
+        InstanceScript* pInstance;
 
-        //DrainLife
-        if (DrainLife_Timer <= diff)
+        uint32 Frostbolt_Timer;
+        uint32 IceTomb_Timer;
+        uint32 DrainLife_Timer;
+
+        void Reset()
         {
-              if (rand()%100 < 55)
-                DoCast(me->getVictim(), SPELL_DRAINLIFE);
+            Frostbolt_Timer = 1000;
+            IceTomb_Timer = 16000;
             DrainLife_Timer = 31000;
-        } else DrainLife_Timer -= diff;
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void EnterCombat(Unit * /*who*/)
+        {
+        }
+
+        void JustDied(Unit* /*Killer*/)
+        {
+            if (pInstance)
+                pInstance->SetData(TYPE_PALLID,IN_PROGRESS);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //Frostbolt
+            if (Frostbolt_Timer <= diff)
+            {
+                 if (rand()%100 < 90)
+                    DoCast(me->getVictim(), SPELL_FROSTBOLT);
+                Frostbolt_Timer = 3500;
+            } else Frostbolt_Timer -= diff;
+
+            //IceTomb
+            if (IceTomb_Timer <= diff)
+            {
+                if (rand()%100 < 65)
+                    DoCast(me->getVictim(), SPELL_ICETOMB);
+                IceTomb_Timer = 28000;
+            } else IceTomb_Timer -= diff;
+
+            //DrainLife
+            if (DrainLife_Timer <= diff)
+            {
+                  if (rand()%100 < 55)
+                    DoCast(me->getVictim(), SPELL_DRAINLIFE);
+                DrainLife_Timer = 31000;
+            } else DrainLife_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_maleki_the_pallid(Creature* creature)
-{
-    return new boss_maleki_the_pallidAI (creature);
-}
 
 void AddSC_boss_maleki_the_pallid()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_maleki_the_pallid";
-    newscript->GetAI = &GetAI_boss_maleki_the_pallid;
-    newscript->RegisterSelf();
+    new boss_maleki_the_pallid();
 }
-

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,61 +31,63 @@ EndScriptData */
 #define SPELL_MOTHERSMILK               16468
 #define SPELL_SUMMON_SPIRE_SPIDERLING   16103
 
-struct boss_mothersmolderwebAI : public ScriptedAI
+class boss_mother_smolderweb : public CreatureScript
 {
-    boss_mothersmolderwebAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_mother_smolderweb() : CreatureScript("boss_mother_smolderweb") { }
 
-    uint32 Crystalize_Timer;
-    uint32 MothersMilk_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        Crystalize_Timer = 20000;
-        MothersMilk_Timer = 10000;
+        return new boss_mothersmolderwebAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/) {}
-
-    void DamageTaken(Unit * /*done_by*/, uint32 &damage)
+    struct boss_mothersmolderwebAI : public ScriptedAI
     {
-        if (me->GetHealth() <= damage)
-            DoCast(me, SPELL_SUMMON_SPIRE_SPIDERLING, true);
-    }
+        boss_mothersmolderwebAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
+        uint32 Crystalize_Timer;
+        uint32 MothersMilk_Timer;
 
-        //Crystalize_Timer
-        if (Crystalize_Timer <= diff)
+        void Reset()
         {
-            DoCast(me, SPELL_CRYSTALIZE);
-            Crystalize_Timer = 15000;
-        } else Crystalize_Timer -= diff;
+            Crystalize_Timer = 20000;
+            MothersMilk_Timer = 10000;
+        }
 
-        //MothersMilk_Timer
-        if (MothersMilk_Timer <= diff)
+        void EnterCombat(Unit * /*who*/) {}
+
+        void DamageTaken(Unit * /*done_by*/, uint32 &damage)
         {
-            DoCast(me, SPELL_MOTHERSMILK);
-            MothersMilk_Timer = urand(5000, 12500);
-        } else MothersMilk_Timer -= diff;
+            if (me->GetHealth() <= damage)
+                DoCast(me, SPELL_SUMMON_SPIRE_SPIDERLING, true);
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void UpdateAI(const uint32 diff)
+        {
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //Crystalize_Timer
+            if (Crystalize_Timer <= diff)
+            {
+                DoCast(me, SPELL_CRYSTALIZE);
+                Crystalize_Timer = 15000;
+            } else Crystalize_Timer -= diff;
+
+            //MothersMilk_Timer
+            if (MothersMilk_Timer <= diff)
+            {
+                DoCast(me, SPELL_MOTHERSMILK);
+                MothersMilk_Timer = urand(5000,12500);
+            } else MothersMilk_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_mothersmolderweb(Creature* creature)
-{
-    return new boss_mothersmolderwebAI (creature);
-}
 
 void AddSC_boss_mothersmolderweb()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_mother_smolderweb";
-    newscript->GetAI = &GetAI_boss_mothersmolderweb;
-    newscript->RegisterSelf();
+    new boss_mother_smolderweb();
 }
-

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -18,20 +18,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <ace/Message_Block.h>
-#include <ace/OS_NS_string.h>
-#include <ace/OS_NS_unistd.h>
-#include <ace/os_include/arpa/os_inet.h>
-#include <ace/os_include/netinet/os_tcp.h>
-#include <ace/os_include/sys/os_types.h>
-#include <ace/os_include/sys/os_socket.h>
-#include <ace/OS_NS_string.h>
-#include <ace/Reactor.h>
-#include <ace/Auto_Ptr.h>
-
 #include "WorldSocket.h"
 #include "Common.h"
-
+#include "ScriptMgr.h"
 #include "Util.h"
 #include "World.h"
 #include "WorldPacket.h"
@@ -46,6 +35,17 @@
 #include "Log.h"
 #include "DBCStores.h"
 #include "WorldLog.h"
+
+#include <ace/Message_Block.h>
+#include <ace/OS_NS_string.h>
+#include <ace/OS_NS_unistd.h>
+#include <ace/os_include/arpa/os_inet.h>
+#include <ace/os_include/netinet/os_tcp.h>
+#include <ace/os_include/sys/os_types.h>
+#include <ace/os_include/sys/os_socket.h>
+#include <ace/OS_NS_string.h>
+#include <ace/Reactor.h>
+#include <ace/Auto_Ptr.h>
 
 #if defined(__GNUC__)
 #pragma pack(1)
@@ -63,7 +63,7 @@ struct ServerPktHeader
         uint8 headerIndex = 0;
         if (isLargePacket())
         {
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "initializing large server to client packet. Size: %u, cmd: %u", size, cmd);
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "initializing large server to client packet. Size: %u, cmd: %u", size, cmd);
             header[headerIndex++] = 0x80 | (0xFF &(size >> 16));
         }
         header[headerIndex++] = 0xFF &(size >> 8);
@@ -172,7 +172,7 @@ int WorldSocket::SendPacket(const WorldPacket& pct)
     if (sWorldLog->LogWorld())
     {
         sWorldLog->outTimestampLog("SERVER:\nSOCKET: %u\nLENGTH: %u\nOPCODE: %s (0x%.4X)\nDATA:\n",
-                     (uint32) get_handle(),
+                     (uint64) get_handle(),
                      pct.size(),
                      LookupOpcodeName (pct.GetOpcode()),
                      pct.GetOpcode());
@@ -274,7 +274,7 @@ int WorldSocket::open(void *a)
     return 0;
 }
 
-int WorldSocket::close(int)
+int WorldSocket::close (int)
 {
     shutdown();
 
@@ -299,14 +299,14 @@ int WorldSocket::handle_input(ACE_HANDLE)
                 return Update();                           // interesting line , isn't it ?
             }
 
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "WorldSocket::handle_input: Peer error closing connection errno = %s", ACE_OS::strerror (errno));
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSocket::handle_input: Peer error closing connection errno = %s", ACE_OS::strerror (errno));
 
             errno = ECONNRESET;
             return -1;
         }
         case 0:
         {
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "WorldSocket::handle_input: Peer has closed connection");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSocket::handle_input: Peer has closed connection");
 
             errno = ECONNRESET;
             return -1;
@@ -645,11 +645,12 @@ int WorldSocket::ProcessIncoming(WorldPacket* new_pct)
                     sLog->outError("WorldSocket::ProcessIncoming: Player send CMSG_AUTH_SESSION again");
                     return -1;
                 }
-
+                
+                sScriptMgr->OnPacketReceive(this, WorldPacket(*new_pct));
                 return HandleAuthSession(*new_pct);
             case CMSG_KEEP_ALIVE:
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "CMSG_KEEP_ALIVE , size: %d", new_pct->size());
-
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_KEEP_ALIVE , size: %d", new_pct->size());
+                sScriptMgr->OnPacketReceive(this, WorldPacket(*new_pct));
                 return 0;
             default:
             {
@@ -676,13 +677,13 @@ int WorldSocket::ProcessIncoming(WorldPacket* new_pct)
             }
         }
     }
-    catch(ByteBufferException &)
+    catch (ByteBufferException &)
     {
         sLog->outError("WorldSocket::ProcessIncoming ByteBufferException occured while parsing an instant handled packet (opcode: %u) from client %s, accountid=%i. Disconnected client.",
                 opcode, GetRemoteAddress().c_str(), m_Session?m_Session->GetAccountId():-1);
         if (sLog->IsOutDebug())
         {
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Dumping error causing packet:");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Dumping error causing packet:");
             new_pct->hexlike();
         }
 
@@ -717,7 +718,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     recvPacket >> clientSeed;
     recvPacket.read(digest, 20);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: client %u, unk2 %u, account %s, clientseed %u",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: client %u, unk2 %u, account %s, clientseed %u",
                 BuiltNumberClient,
                 unk2,
                 account.c_str(),
@@ -784,7 +785,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     const char* sStr = s.AsHexStr();                       // Must be freed by OPENSSL_free()
     const char* vStr = v.AsHexStr();                       // Must be freed by OPENSSL_free()
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: (s, v) check s: %s v: %s", sStr, vStr);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: (s, v) check s: %s v: %s", sStr, vStr);
 
     OPENSSL_free((void*) sStr);
     OPENSSL_free((void*) vStr);
@@ -853,7 +854,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     // Check locked state for server
     sWorld->UpdateAllowedSecurity();
     AccountTypes allowedAccountType = sWorld->GetPlayerSecurityLimit();
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Allowed Level: %u Player Level %u", allowedAccountType, AccountTypes(security));
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Allowed Level: %u Player Level %u", allowedAccountType, AccountTypes(security));
     if (allowedAccountType > SEC_PLAYER && security < allowedAccountType)
     {
         WorldPacket Packet(SMSG_AUTH_RESPONSE, 1);
@@ -891,7 +892,7 @@ int WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
 
     std::string address = GetRemoteAddress();
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: Client '%s' authenticated successfully from %s.",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSocket::HandleAuthSession: Client '%s' authenticated successfully from %s.",
                 account.c_str(),
                 address.c_str());
 
@@ -992,13 +993,15 @@ int WorldSocket::HandlePing(WorldPacket& recvPacket)
 
 int WorldSocket::iSendPacket (const WorldPacket& pct)
 {
+    // Create a copy of the original packet; this is to avoid issues if a hook modifies it.
+    sScriptMgr->OnPacketSend(this, WorldPacket(pct));
+
     ServerPktHeader header(pct.size()+2, pct.GetOpcode());
     if (m_OutBuffer->space() < pct.size() + header.getHeaderLength())
     {
         errno = ENOBUFS;
         return -1;
     }
-
 
     m_Crypt.EncryptSend(header.header, header.getHeaderLength());
 

@@ -1,7 +1,8 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,7 +54,7 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
         //load not built in channel if saved
         std::string _name(name);
         CharacterDatabase.EscapeString(_name);
-        QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT m_announce, m_moderate, m_public, m_password, BannedList FROM channels WHERE m_name = '%s' AND m_team = '%u'", _name.c_str(), m_Team);
+        QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT m_announce, m_moderate, m_public, m_password, BannedList FROM channels WHERE m_name = '%s' AND _team = '%u'", _name.c_str(), m_Team);
         if (result)//load
         {
             Field *fields = result->Fetch();
@@ -67,14 +68,14 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
 
             if (db_BannedList)
             {
-                Tokens tokens = StrSplit(db_BannedList, " ");
+                Tokens tokens(db_BannedList, ' ');
                 Tokens::iterator iter;
                 for (iter = tokens.begin(); iter != tokens.end(); ++iter)
                 {
-                    uint64 banned_guid = atol((*iter).c_str());
+                    uint64 banned_guid = atol(*iter);
                     if (banned_guid)
                     {
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) loaded banned guid: %u",name.c_str(), banned_guid);
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) loaded banned guid:" UI64FMTD "", name.c_str(), banned_guid);
                         banned.insert(banned_guid);
                     }
                 }
@@ -83,10 +84,10 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
         else // save
         {
             // _name is already escaped at this point.
-            if (CharacterDatabase.PExecute("INSERT INTO channels (m_name, m_team, m_announce, m_moderate, m_public, m_password) "
+            if (CharacterDatabase.PExecute("INSERT INTO channels (m_name, _team, m_announce, m_moderate, m_public, m_password) "
                 "VALUES ('%s', '%u', '1', '0', '1', '')", _name.c_str(), m_Team))
             {
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "New Channel(%s) saved", name.c_str());
+                sLog->outDebug(LOG_FILTER_NETWORKIO, "New Channel(%s) saved", name.c_str());
                 m_IsSaved = true;
             }
         }
@@ -100,7 +101,7 @@ bool Channel::_UpdateStringInDB(const std::string& colName, const std::string& c
     std::string _colValue(colValue);
     CharacterDatabase.EscapeString(_colValue);
     CharacterDatabase.EscapeString(_name);
-    return CharacterDatabase.PExecute("UPDATE channels SET %s = '%s' WHERE m_name = '%s' AND m_team = '%u'",
+    return CharacterDatabase.PExecute("UPDATE channels SET %s = '%s' WHERE m_name = '%s' AND _team = '%u'",
         colName.c_str(), _colValue.c_str(), _name.c_str(), m_Team);
 }
 
@@ -109,7 +110,7 @@ bool Channel::_UpdateIntInDB(const std::string& colName, int colValue) const
     // Prevent SQL-injection
     std::string _name(m_name);
     CharacterDatabase.EscapeString(_name);
-    return CharacterDatabase.PExecute("UPDATE channels SET %s = '%u' WHERE m_name = '%s' AND m_team = '%u'",
+    return CharacterDatabase.PExecute("UPDATE channels SET %s = '%u' WHERE m_name = '%s' AND _team = '%u'",
         colName.c_str(), colValue, _name.c_str(), m_Team);
 }
 
@@ -124,7 +125,7 @@ void Channel::_UpdateBanListInDB() const
             banlist << (*iter) << " ";
         std::string banListStr = banlist.str();
         if (_UpdateStringInDB("BannedList", banListStr))
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) BannedList saved", m_name.c_str());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) BannedList saved", m_name.c_str());
     }
 }
 
@@ -388,7 +389,7 @@ void Channel::Password(uint64 p, const char *pass)
         MakePasswordChanged(&data, p);
         SendToAll(&data);
         if (m_IsSaved && _UpdateStringInDB("m_password", m_password))
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) password saved", m_name.c_str());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) password saved", m_name.c_str());
     }
 }
 
@@ -595,7 +596,7 @@ void Channel::Announce(uint64 p)
             MakeAnnouncementsOff(&data, p);
         SendToAll(&data);
         if (m_IsSaved && _UpdateIntInDB("m_announce", m_announce ? 1 : 0))
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) announce saved", m_name.c_str());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) announce saved", m_name.c_str());
     }
 }
 
@@ -629,7 +630,7 @@ void Channel::Moderate(uint64 p)
             MakeModerationOff(&data, p);
         SendToAll(&data);
         if (m_IsSaved && _UpdateIntInDB("m_announce", m_announce ? 1 : 0))
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) announce saved", m_name.c_str());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) announce saved", m_name.c_str());
     }
 }
 
@@ -767,7 +768,7 @@ void Channel::SetOwner(uint64 guid, bool exclaim)
             SendToAll(&data);
         }
         if (m_IsSaved && _UpdateIntInDB("m_moderate", m_moderate ? 1 : 0))
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Channel(%s) moderate saved", m_name.c_str());
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Channel(%s) moderate saved", m_name.c_str());
     }
 }
 

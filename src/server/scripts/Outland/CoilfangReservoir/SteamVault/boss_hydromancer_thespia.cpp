@@ -1,22 +1,22 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Boss_Hydromancer_Thespia
@@ -45,157 +45,149 @@ EndContentData */
 #define SPELL_LUNG_BURST            31481
 #define SPELL_ENVELOPING_WINDS      31718
 
-struct boss_thespiaAI : public ScriptedAI
-{
-    boss_thespiaAI(Creature *c) : ScriptedAI(c)
-    {
-        instance = c->GetInstanceScript();
-        HeroicMode = me->GetMap()->IsHeroic();
-    }
-
-    ScriptedInstance *instance;
-    bool HeroicMode;
-
-    uint32 LightningCloud_Timer;
-    uint32 LungBurst_Timer;
-    uint32 EnvelopingWinds_Timer;
-
-    void Reset()
-    {
-        LightningCloud_Timer = 15000;
-        LungBurst_Timer = 7000;
-        EnvelopingWinds_Timer = 9000;
-
-        if (instance && me->isAlive())
-            instance->SetData(TYPE_HYDROMANCER_THESPIA, NOT_STARTED);
-    }
-
-    void JustDied(Unit* Killer)
-    {
-        DoScriptText(SAY_DEAD, me);
-
-        if (instance)
-            instance->SetData(TYPE_HYDROMANCER_THESPIA, DONE);
-    }
-
-    void KilledUnit(Unit* victim)
-    {
-        switch (rand()%2)
-        {
-            case 0: DoScriptText(SAY_SLAY_1, me); break;
-            case 1: DoScriptText(SAY_SLAY_2, me); break;
-        }
-    }
-
-    void EnterCombat(Unit *who)
-    {
-        switch (rand()%3)
-        {
-            case 0: DoScriptText(SAY_AGGRO_1, me); break;
-            case 1: DoScriptText(SAY_AGGRO_2, me); break;
-            case 2: DoScriptText(SAY_AGGRO_3, me); break;
-        }
-
-        if (instance)
-            instance->SetData(TYPE_HYDROMANCER_THESPIA, IN_PROGRESS);
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
-
-        //LightningCloud_Timer
-        if (LightningCloud_Timer <= diff)
-        {
-            //cast twice in Heroic mode
-            if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, SPELL_LIGHTNING_CLOUD);
-            if (HeroicMode)
-                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                    DoCast(pTarget, SPELL_LIGHTNING_CLOUD);
-            LightningCloud_Timer = 15000+rand()%10000;
-        } else LightningCloud_Timer -=diff;
-
-        //LungBurst_Timer
-        if (LungBurst_Timer <= diff)
-        {
-            if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, SPELL_LUNG_BURST);
-            LungBurst_Timer = 7000+rand()%5000;
-        } else LungBurst_Timer -=diff;
-
-        //EnvelopingWinds_Timer
-        if (EnvelopingWinds_Timer <= diff)
-        {
-            //cast twice in Heroic mode
-            if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, SPELL_ENVELOPING_WINDS);
-            if (HeroicMode)
-                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                    DoCast(pTarget, SPELL_ENVELOPING_WINDS);
-            EnvelopingWinds_Timer = 10000+rand()%5000;
-        } else EnvelopingWinds_Timer -=diff;
-
-        DoMeleeAttackIfReady();
-    }
-};
-
 #define SPELL_WATER_BOLT_VOLLEY     34449
 #define H_SPELL_WATER_BOLT_VOLLEY   37924
 
-struct mob_coilfang_waterelementalAI : public ScriptedAI
+class boss_hydromancer_thespia : public CreatureScript
 {
-    mob_coilfang_waterelementalAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_hydromancer_thespia() : CreatureScript("boss_hydromancer_thespia") { }
 
-    bool HeroicMode;
-    uint32 WaterBoltVolley_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        HeroicMode = me->GetMap()->IsHeroic();
-        WaterBoltVolley_Timer = 3000+rand()%3000;
+        return new boss_thespiaAI (pCreature);
     }
 
-    void EnterCombat(Unit *who) { }
-
-    void UpdateAI(const uint32 diff)
+    struct boss_thespiaAI : public ScriptedAI
     {
-        if (!UpdateVictim())
-            return;
-
-        if (WaterBoltVolley_Timer <= diff)
+        boss_thespiaAI(Creature *c) : ScriptedAI(c)
         {
-            DoCast(me, HeroicMode ? H_SPELL_WATER_BOLT_VOLLEY : SPELL_WATER_BOLT_VOLLEY);
-            WaterBoltVolley_Timer = 7000+rand()%5000;
-        } else WaterBoltVolley_Timer -= diff;
+            pInstance = c->GetInstanceScript();
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        InstanceScript *pInstance;
+
+        uint32 LightningCloud_Timer;
+        uint32 LungBurst_Timer;
+        uint32 EnvelopingWinds_Timer;
+
+        void Reset()
+        {
+            LightningCloud_Timer = 15000;
+            LungBurst_Timer = 7000;
+            EnvelopingWinds_Timer = 9000;
+
+            if (pInstance)
+                pInstance->SetData(TYPE_HYDROMANCER_THESPIA, NOT_STARTED);
+        }
+
+        void JustDied(Unit* /*Killer*/)
+        {
+            DoScriptText(SAY_DEAD, me);
+
+            if (pInstance)
+                pInstance->SetData(TYPE_HYDROMANCER_THESPIA, DONE);
+        }
+
+        void KilledUnit(Unit* /*victim*/)
+        {
+            DoScriptText(RAND(SAY_SLAY_1,SAY_SLAY_2), me);
+        }
+
+        void EnterCombat(Unit * /*who*/)
+        {
+            DoScriptText(RAND(SAY_AGGRO_1,SAY_AGGRO_2,SAY_AGGRO_3), me);
+
+            if (pInstance)
+                pInstance->SetData(TYPE_HYDROMANCER_THESPIA, IN_PROGRESS);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            //LightningCloud_Timer
+            if (LightningCloud_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                    DoCast(pTarget, SPELL_LIGHTNING_CLOUD);
+
+                //cast twice in Heroic mode
+                if (IsHeroic())
+                    if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                        DoCast(pTarget, SPELL_LIGHTNING_CLOUD);
+
+                LightningCloud_Timer = 15000+rand()%10000;
+            } else LightningCloud_Timer -=diff;
+
+            //LungBurst_Timer
+            if (LungBurst_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                    DoCast(pTarget, SPELL_LUNG_BURST);
+                LungBurst_Timer = 7000+rand()%5000;
+            } else LungBurst_Timer -=diff;
+
+            //EnvelopingWinds_Timer
+            if (EnvelopingWinds_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                    DoCast(pTarget, SPELL_ENVELOPING_WINDS);
+
+                //cast twice in Heroic mode
+                if (IsHeroic())
+                    if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                        DoCast(pTarget, SPELL_ENVELOPING_WINDS);
+                EnvelopingWinds_Timer = 10000+rand()%5000;
+            } else EnvelopingWinds_Timer -=diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
 
-CreatureAI* GetAI_boss_thespiaAI(Creature* creature)
+class mob_coilfang_waterelemental : public CreatureScript
 {
-    return new boss_thespiaAI (creature);
-}
+public:
+    mob_coilfang_waterelemental() : CreatureScript("mob_coilfang_waterelemental") { }
 
-CreatureAI* GetAI_mob_coilfang_waterelementalAI(Creature* creature)
-{
-    return new mob_coilfang_waterelementalAI (creature);
-}
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mob_coilfang_waterelementalAI (pCreature);
+    }
+
+    struct mob_coilfang_waterelementalAI : public ScriptedAI
+    {
+        mob_coilfang_waterelementalAI(Creature *c) : ScriptedAI(c) {}
+
+        uint32 WaterBoltVolley_Timer;
+
+        void Reset()
+        {
+            WaterBoltVolley_Timer = 3000+rand()%3000;
+        }
+
+        void EnterCombat(Unit * /*who*/) { }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (WaterBoltVolley_Timer <= diff)
+            {
+                DoCast(me, SPELL_WATER_BOLT_VOLLEY);
+                WaterBoltVolley_Timer = 7000+rand()%5000;
+            } else WaterBoltVolley_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
 
 void AddSC_boss_hydromancer_thespia()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "boss_hydromancer_thespia";
-    newscript->GetAI = &GetAI_boss_thespiaAI;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "mob_coilfang_waterelemental";
-    newscript->GetAI = &GetAI_mob_coilfang_waterelementalAI;
-    newscript->RegisterSelf();
+    new boss_hydromancer_thespia();
+    new mob_coilfang_waterelemental();
 }
-

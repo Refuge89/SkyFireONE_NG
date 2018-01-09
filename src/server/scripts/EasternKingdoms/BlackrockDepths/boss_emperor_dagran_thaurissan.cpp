@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -39,77 +39,79 @@ enum Spells
     SPELL_AVATAROFFLAME                                    = 15636
 };
 
-struct boss_draganthaurissanAI : public ScriptedAI
+class boss_emperor_dagran_thaurissan : public CreatureScript
 {
-    boss_draganthaurissanAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_emperor_dagran_thaurissan() : CreatureScript("boss_emperor_dagran_thaurissan") { }
 
-    uint32 HandOfThaurissan_Timer;
-    uint32 AvatarOfFlame_Timer;
-    //uint32 Counter;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        HandOfThaurissan_Timer = 4000;
-        AvatarOfFlame_Timer = 25000;
-        //Counter= 0;
+        return new boss_draganthaurissanAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_draganthaurissanAI : public ScriptedAI
     {
-        DoScriptText(SAY_AGGRO, me);
-        me->CallForHelp(VISIBLE_RANGE);
-    }
+        boss_draganthaurissanAI(Creature *c) : ScriptedAI(c) {}
 
-    void KilledUnit(Unit* /*victim*/)
-    {
-        DoScriptText(SAY_SLAY, me);
-    }
+        uint32 HandOfThaurissan_Timer;
+        uint32 AvatarOfFlame_Timer;
+        //uint32 Counter;
 
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
-
-        if (HandOfThaurissan_Timer <= diff)
+        void Reset()
         {
-            if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, SPELL_HANDOFTHAURISSAN);
+            HandOfThaurissan_Timer = 4000;
+            AvatarOfFlame_Timer = 25000;
+            //Counter= 0;
+        }
 
-            //3 Hands of Thaurissan will be casted
-            //if (Counter < 3)
-            //{
-            //    HandOfThaurissan_Timer = 1000;
-            //    ++Counter;
-            //}
-            //else
-            //{
-                HandOfThaurissan_Timer = 5000;
-                //Counter = 0;
-            //}
-        } else HandOfThaurissan_Timer -= diff;
-
-        //AvatarOfFlame_Timer
-        if (AvatarOfFlame_Timer <= diff)
+        void EnterCombat(Unit * /*who*/)
         {
-            DoCast(me->getVictim(), SPELL_AVATAROFFLAME);
-            AvatarOfFlame_Timer = 18000;
-        } else AvatarOfFlame_Timer -= diff;
+            DoScriptText(SAY_AGGRO, me);
+            me->CallForHelp(VISIBLE_RANGE);
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void KilledUnit(Unit* /*victim*/)
+        {
+            DoScriptText(SAY_SLAY, me);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            if (HandOfThaurissan_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectUnit(SELECT_TARGET_RANDOM,0))
+                    DoCast(pTarget, SPELL_HANDOFTHAURISSAN);
+
+                //3 Hands of Thaurissan will be casted
+                //if (Counter < 3)
+                //{
+                //    HandOfThaurissan_Timer = 1000;
+                //    ++Counter;
+                //}
+                //else
+                //{
+                    HandOfThaurissan_Timer = 5000;
+                    //Counter = 0;
+                //}
+            } else HandOfThaurissan_Timer -= diff;
+
+            //AvatarOfFlame_Timer
+            if (AvatarOfFlame_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_AVATAROFFLAME);
+                AvatarOfFlame_Timer = 18000;
+            } else AvatarOfFlame_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_boss_draganthaurissan(Creature* creature)
-{
-    return new boss_draganthaurissanAI (creature);
-}
 
 void AddSC_boss_draganthaurissan()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_emperor_dagran_thaurissan";
-    newscript->GetAI = &GetAI_boss_draganthaurissan;
-    newscript->RegisterSelf();
+    new boss_emperor_dagran_thaurissan();
 }

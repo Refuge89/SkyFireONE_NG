@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -32,59 +32,61 @@ EndScriptData */
 #define SPELL_HEALING_POTION    15504
 #define SPELL_HOOKEDNET         15609
 
-struct boss_quatermasterzigrisAI : public ScriptedAI
+class quartermaster_zigris : public CreatureScript
 {
-    boss_quatermasterzigrisAI(Creature *c) : ScriptedAI(c) {}
+public:
+    quartermaster_zigris() : CreatureScript("quartermaster_zigris") { }
 
-    uint32 Shoot_Timer;
-    uint32 StunBomb_Timer;
-    //uint32 HelingPotion_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        Shoot_Timer = 1000;
-        StunBomb_Timer = 16000;
-        //HelingPotion_Timer = 25000;
+        return new boss_quatermasterzigrisAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_quatermasterzigrisAI : public ScriptedAI
     {
-    }
+        boss_quatermasterzigrisAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
+        uint32 Shoot_Timer;
+        uint32 StunBomb_Timer;
+        //uint32 HelingPotion_Timer;
 
-        //Shoot_Timer
-        if (Shoot_Timer <= diff)
+        void Reset()
         {
-            DoCast(me->getVictim(), SPELL_SHOOT);
-            Shoot_Timer = 500;
-        } else Shoot_Timer -= diff;
+            Shoot_Timer = 1000;
+            StunBomb_Timer = 16000;
+            //HelingPotion_Timer = 25000;
+        }
 
-        //StunBomb_Timer
-        if (StunBomb_Timer <= diff)
+        void EnterCombat(Unit * /*who*/)
         {
-            DoCast(me->getVictim(), SPELL_STUNBOMB);
-            StunBomb_Timer = 14000;
-        } else StunBomb_Timer -= diff;
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void UpdateAI(const uint32 diff)
+        {
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
+
+            //Shoot_Timer
+            if (Shoot_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SHOOT);
+                Shoot_Timer = 500;
+            } else Shoot_Timer -= diff;
+
+            //StunBomb_Timer
+            if (StunBomb_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_STUNBOMB);
+                StunBomb_Timer = 14000;
+            } else StunBomb_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_quatermasterzigris(Creature* creature)
-{
-    return new boss_quatermasterzigrisAI (creature);
-}
 
 void AddSC_boss_quatermasterzigris()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "quartermaster_zigris";
-    newscript->GetAI = &GetAI_boss_quatermasterzigris;
-    newscript->RegisterSelf();
+    new quartermaster_zigris();
 }
-

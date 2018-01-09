@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -281,8 +281,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
     if (!is_temporary_summoned)
     {
         // permanent controlled pets store state in DB
-        Tokens tokens = StrSplit(fields[16].GetString(), " ");
-
+        Tokens tokens(fields[16].GetString(), ' ');
+        
         if (tokens.size() != 20)
             return false;
 
@@ -290,23 +290,22 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
         Tokens::iterator iter;
         for (iter = tokens.begin(), index = 0; index < 10; ++iter, ++index)
         {
-            m_charmInfo->GetActionBarEntry(index)->Type = atol((*iter).c_str());
+            m_charmInfo->GetActionBarEntry(index)->Type = atol(tokens[index]);
             ++iter;
-            m_charmInfo->GetActionBarEntry(index)->SpellOrAction = atol((*iter).c_str());
+            m_charmInfo->GetActionBarEntry(index)->SpellOrAction = atol(tokens[index]);
             if (m_charmInfo->GetActionBarEntry(index)->Type == ACT_ENABLED && !IsAutocastableSpell(m_charmInfo->GetActionBarEntry(index)->SpellOrAction))
                 m_charmInfo->GetActionBarEntry(index)->Type = ACT_PASSIVE;
         }
 
         //init teach spells
-        tokens = StrSplit(fields[17].GetString(), " ");
         for (iter = tokens.begin(), index = 0; index < 4; ++iter, ++index)
         {
-            uint32 tmp = atol((*iter).c_str());
+            uint32 tmp = atol(tokens[index]);
 
             ++iter;
 
             if (tmp)
-                AddTeachSpell(tmp, atol((*iter).c_str()));
+                AddTeachSpell(tmp, atol(tokens[index]));
             else
                 break;
         }
@@ -326,7 +325,7 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petentry, uint32 petnumber, bool c
         CastPetAuras(current);
     }
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Pet has guid %u", GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Pet has guid %u", GetGUIDLow());
 
     owner->PetSpellInitialize();
 
@@ -847,7 +846,7 @@ void Pet::GivePetXP(uint32 xp)
         newXP -= nextLvlXP;
 
         SetLevel(level + 1);
-        SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32((Skyfire::XP::xp_to_level(level+1))/4));
+        SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32(sObjectMgr->GetXPForLevel(level+1))/4);
 
         level = getLevel();
         nextLvlXP = GetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP);
@@ -878,7 +877,7 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
     }
     uint32 guid=sObjectMgr->GenerateLowGuid(HIGHGUID_PET);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Create pet");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Create pet");
     uint32 pet_number = sObjectMgr->GeneratePetNumber();
     if (!Create(guid, creature->GetMap(), creature->GetEntry(), pet_number))
         return false;
@@ -906,7 +905,8 @@ bool Pet::CreateBaseAtCreature(Creature* creature)
     setPowerType(POWER_FOCUS);
     SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, 0);
     SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
-    SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32((Skyfire::XP::xp_to_level(creature->getLevel()))/4));
+
+    SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32((Skyfire::XP::GetZeroDifference(creature->getLevel()))/4));
     SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
     SetUInt32Value(UNIT_NPC_FLAGS, 0);
 
@@ -1041,7 +1041,7 @@ bool Guardian::InitStatsForLevel(uint32 petlevel)
         }
         case HUNTER_PET:
         {
-            SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32((Skyfire::XP::xp_to_level(petlevel))/4));
+            SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, uint32(sObjectMgr->GetXPForLevel(petlevel))/4);
 
             //these formula may not be correct; however, it is designed to be close to what it should be
             //this makes dps 0.5 of pets level
@@ -1218,7 +1218,7 @@ void Pet::_LoadSpellCooldowns()
 
             _AddCreatureSpellCooldown(spell_id, db_time);
 
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Pet (Number: %u) spell %u cooldown loaded (%u secs).", m_charmInfo->GetPetNumber(), spell_id, uint32(db_time-curTime));
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Pet (Number: %u) spell %u cooldown loaded (%u secs).", m_charmInfo->GetPetNumber(), spell_id, uint32(db_time-curTime));
         }
         while (result->NextRow());
 

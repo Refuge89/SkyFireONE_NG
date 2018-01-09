@@ -1,52 +1,92 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Blades_Edge_Mountains
 SD%Complete: 90
-SDComment: Quest support: 10556, 10609, 10682, 10980, 10512. Ogri'la->Skettis Flight. (npc_daranelle needs bit more work before consider complete)
+SDComment: Quest support: 10503, 10504, 10556, 10609, 10682, 10821, 10980. Ogri'la->Skettis Flight. (npc_daranelle needs bit more work before consider complete)
 SDCategory: Blade's Edge Mountains
 EndScriptData */
 
 /* ContentData
+mobs_bladespire_ogre
 mobs_nether_drake
 npc_daranelle
 npc_overseer_nuaar
 npc_saikkal_the_elder
-npc_ogre_brute
-npc_bloodmaul_brutebane
+go_legion_obelisk
 EndContentData */
 
 #include "ScriptPCH.h"
+
+//Support for quest: You're Fired! (10821)
+bool     obelisk_one, obelisk_two, obelisk_three, obelisk_four, obelisk_five;
+
+#define LEGION_OBELISK_ONE           185193
+#define LEGION_OBELISK_TWO           185195
+#define LEGION_OBELISK_THREE         185196
+#define LEGION_OBELISK_FOUR          185197
+#define LEGION_OBELISK_FIVE          185198
+
+/*######
+## mobs_bladespire_ogre
+######*/
+
+//TODO: add support for quest 10512 + Creature abilities
+class mobs_bladespire_ogre : public CreatureScript
+{
+public:
+    mobs_bladespire_ogre() : CreatureScript("mobs_bladespire_ogre") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new mobs_bladespire_ogreAI (pCreature);
+    }
+
+    struct mobs_bladespire_ogreAI : public ScriptedAI
+    {
+        mobs_bladespire_ogreAI(Creature *c) : ScriptedAI(c) {}
+
+        void Reset() { }
+
+        void UpdateAI(const uint32 /*uiDiff*/)
+        {
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+};
 
 /*######
 ## mobs_nether_drake
 ######*/
 
-enum eDrake
+enum eNetherdrake
 {
-    SAY_NIHIL_1                 = -1000169,
-    SAY_NIHIL_2                 = -1000170,
-    SAY_NIHIL_3                 = -1000171,
-    SAY_NIHIL_4                 = -1000172,
-    SAY_NIHIL_INTERRUPT         = -1000173,
+    SAY_NIHIL_1                 = -1000169, //signed for 5955
+    SAY_NIHIL_2                 = -1000170, //signed for 5955
+    SAY_NIHIL_3                 = -1000171, //signed for 5955
+    SAY_NIHIL_4                 = -1000172, //signed for 20021, used by 20021,21817,21820,21821,21823
+    SAY_NIHIL_INTERRUPT         = -1000173, //signed for 20021, used by 20021,21817,21820,21821,21823
 
     ENTRY_WHELP                 = 20021,
     ENTRY_PROTO                 = 21821,
@@ -61,278 +101,325 @@ enum eDrake
     SPELL_INTANGIBLE_PRESENCE   = 36513
 };
 
-struct mobs_nether_drakeAI : public ScriptedAI
+class mobs_nether_drake : public CreatureScript
 {
-    mobs_nether_drakeAI(Creature *c) : ScriptedAI(c) {}
+public:
+    mobs_nether_drake() : CreatureScript("mobs_nether_drake") { }
 
-    bool IsNihil;
-    uint32 NihilSpeech_Timer;
-    uint32 NihilSpeech_Phase;
-
-    uint32 ArcaneBlast_Timer;
-    uint32 ManaBurn_Timer;
-    uint32 IntangiblePresence_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        NihilSpeech_Timer = 2000;
-        IsNihil = false;
-        if (me->GetEntry() == ENTRY_NIHIL)
-        {
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-            IsNihil = true;
-        }
-        NihilSpeech_Phase = 1;
-
-        ArcaneBlast_Timer = 7500;
-        ManaBurn_Timer = 10000;
-        IntangiblePresence_Timer = 15000;
+        return new mobs_nether_drakeAI (pCreature);
     }
 
-    void EnterCombat(Unit* who) { }
-
-    void SpellHit(Unit *caster, const SpellEntry *spell)
+    struct mobs_nether_drakeAI : public ScriptedAI
     {
-        if (spell->Id == SPELL_T_PHASE_MODULATOR && caster->GetTypeId() == TYPEID_PLAYER)
+        mobs_nether_drakeAI(Creature *c) : ScriptedAI(c) {}
+
+        bool IsNihil;
+        uint32 NihilSpeech_Timer;
+        uint32 NihilSpeech_Phase;
+
+        uint32 ArcaneBlast_Timer;
+        uint32 ManaBurn_Timer;
+        uint32 IntangiblePresence_Timer;
+
+        void Reset()
         {
-            uint32 cEntry = 0;
+            IsNihil = false;
+            NihilSpeech_Timer = 3000;
+            NihilSpeech_Phase = 0;
 
-            switch (me->GetEntry())
+            ArcaneBlast_Timer = 7500;
+            ManaBurn_Timer = 10000;
+            IntangiblePresence_Timer = 15000;
+        }
+
+        void EnterCombat(Unit* /*who*/) {}
+
+        void MoveInLineOfSight(Unit *who)
+        {
+            if (me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE))
+                return;
+
+            ScriptedAI::MoveInLineOfSight(who);
+        }
+
+        //in case Creature was not summoned (not expected)
+        void MovementInform(uint32 type, uint32 id)
+        {
+            if (type != POINT_MOTION_TYPE)
+                return;
+
+            if (id == 0)
             {
-                case ENTRY_WHELP:
-                    switch (rand()%4)
-                    {
-                        case 0: cEntry = ENTRY_PROTO; break;
-                        case 1: cEntry = ENTRY_ADOLE; break;
-                        case 2: cEntry = ENTRY_MATUR; break;
-                        case 3: cEntry = ENTRY_NIHIL; break;
-                    }
-                    break;
-                case ENTRY_PROTO:
-                    switch (rand()%3)
-                    {
-                        case 0: cEntry = ENTRY_ADOLE; break;
-                        case 1: cEntry = ENTRY_MATUR; break;
-                        case 2: cEntry = ENTRY_NIHIL; break;
-                    }
-                    break;
-                case ENTRY_ADOLE:
-                    switch (rand()%3)
-                    {
-                        case 0: cEntry = ENTRY_PROTO; break;
-                        case 1: cEntry = ENTRY_MATUR; break;
-                        case 2: cEntry = ENTRY_NIHIL; break;
-                    }
-                    break;
-                case ENTRY_MATUR:
-                    switch (rand()%3)
-                    {
-                        case 0: cEntry = ENTRY_PROTO; break;
-                        case 1: cEntry = ENTRY_ADOLE; break;
-                        case 2: cEntry = ENTRY_NIHIL; break;
-                    }
-                    break;
-                case ENTRY_NIHIL:
-                    if (NihilSpeech_Phase)
-                    {
-                        DoScriptText(SAY_NIHIL_INTERRUPT, me);
-                        IsNihil = false;
-                        switch (rand()%3)
-                        {
-                            case 0: cEntry = ENTRY_PROTO; break;
-                            case 1: cEntry = ENTRY_ADOLE; break;
-                            case 2: cEntry = ENTRY_MATUR; break;
-                        }
-                    }
-                    break;
+                me->setDeathState(JUST_DIED);
+                me->RemoveCorpse();
+                me->SetHealth(0);
             }
+        }
 
-            if (cEntry)
+        void SpellHit(Unit *caster, const SpellEntry *spell)
+        {
+            if (spell->Id == SPELL_T_PHASE_MODULATOR && caster->GetTypeId() == TYPEID_PLAYER)
             {
-                me->UpdateEntry(cEntry);
+                const uint32 entry_list[4] = {ENTRY_PROTO, ENTRY_ADOLE, ENTRY_MATUR, ENTRY_NIHIL};
+                int cid = rand()%(4-1);
 
-                if (cEntry == ENTRY_NIHIL)
+                if (entry_list[cid] == me->GetEntry())
+                    ++cid;
+
+                //we are nihil, so say before transform
+                if (me->GetEntry() == ENTRY_NIHIL)
                 {
-                    me->InterruptNonMeleeSpells(true);
-                    me->RemoveAllAuras();
-                    me->DeleteThreatList();
-                    me->CombatStop(true);
-                    Reset();
+                    DoScriptText(SAY_NIHIL_INTERRUPT, me);
+                    me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    IsNihil = false;
+                }
+
+                if (me->UpdateEntry(entry_list[cid]))
+                {
+                    if (entry_list[cid] == ENTRY_NIHIL)
+                    {
+                        EnterEvadeMode();
+                        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        IsNihil = true;
+                    }else
+                        AttackStart(caster);
                 }
             }
         }
-    }
 
-    void UpdateAI(const uint32 diff)
-    {
-        if (IsNihil)
+        void UpdateAI(const uint32 diff)
         {
-            if (NihilSpeech_Phase)
+            if (IsNihil)
             {
                 if (NihilSpeech_Timer <= diff)
                 {
-                    switch (NihilSpeech_Phase)
+                    switch(NihilSpeech_Phase)
                     {
-                        case 1:
+                        case 0:
                             DoScriptText(SAY_NIHIL_1, me);
                             ++NihilSpeech_Phase;
                             break;
-                        case 2:
+                        case 1:
                             DoScriptText(SAY_NIHIL_2, me);
                             ++NihilSpeech_Phase;
                             break;
-                        case 3:
+                        case 2:
                             DoScriptText(SAY_NIHIL_3, me);
                             ++NihilSpeech_Phase;
                             break;
-                        case 4:
+                        case 3:
                             DoScriptText(SAY_NIHIL_4, me);
                             ++NihilSpeech_Phase;
                             break;
-                        case 5:
+                        case 4:
                             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                                                            // + MOVEFLAG_LEVITATING
-                            me->AddUnitMovementFlag(MOVEFLAG_ONTRANSPORT);
-                            //then take off to random location. creature is initially summoned, so don't bother do anything else.
-                            me->GetMotionMaster()->MovePoint(0, me->GetPositionX()+100, me->GetPositionY(), me->GetPositionZ()+100);
-                            NihilSpeech_Phase = 0;
+                            //take off to location above
+                            me->GetMotionMaster()->MovePoint(0, me->GetPositionX()+50.0f, me->GetPositionY(), me->GetPositionZ()+50.0f);
+                            ++NihilSpeech_Phase;
                             break;
                     }
                     NihilSpeech_Timer = 5000;
                 } else NihilSpeech_Timer -=diff;
+
+                //anything below here is not interesting for Nihil, so skip it
+                return;
             }
-            return;                                         //anything below here is not interesting for Nihil, so skip it
+
+            if (!UpdateVictim())
+                return;
+
+            if (IntangiblePresence_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_INTANGIBLE_PRESENCE);
+                IntangiblePresence_Timer = 15000+rand()%15000;
+            } else IntangiblePresence_Timer -= diff;
+
+            if (ManaBurn_Timer <= diff)
+            {
+                Unit *pTarget = me->getVictim();
+                if (pTarget && pTarget->getPowerType() == POWER_MANA)
+                    DoCast(pTarget, SPELL_MANA_BURN);
+                ManaBurn_Timer = 8000+rand()%8000;
+            } else ManaBurn_Timer -= diff;
+
+            if (ArcaneBlast_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_ARCANE_BLAST);
+                ArcaneBlast_Timer = 2500+rand()%5000;
+            } else ArcaneBlast_Timer -= diff;
+
+            DoMeleeAttackIfReady();
         }
-
-        if (!UpdateVictim())
-            return;
-
-        if (IntangiblePresence_Timer <= diff)
-        {
-            DoCast(me->getVictim(),SPELL_INTANGIBLE_PRESENCE);
-            IntangiblePresence_Timer = 15000+rand()%15000;
-        } else IntangiblePresence_Timer -= diff;
-
-        if (ManaBurn_Timer <= diff)
-        {
-            Unit *pTarget = me->getVictim();
-            if (pTarget && pTarget->getPowerType() == POWER_MANA)
-                DoCast(pTarget, SPELL_MANA_BURN);
-            ManaBurn_Timer = 8000+rand()%8000;
-        } else ManaBurn_Timer -= diff;
-
-        if (ArcaneBlast_Timer <= diff)
-        {
-            DoCast(me->getVictim(),SPELL_ARCANE_BLAST);
-            ArcaneBlast_Timer = 2500+rand()%5000;
-        } else ArcaneBlast_Timer -= diff;
-
-        DoMeleeAttackIfReady();
-    }
+    };
 };
-CreatureAI* GetAI_mobs_nether_drake(Creature* creature)
-{
-    return new mobs_nether_drakeAI (creature);
-}
 
 /*######
 ## npc_daranelle
 ######*/
 
-#define SAY_DARANELLE -1000174
-
-struct npc_daranelleAI : public ScriptedAI
+enum eDaranelle
 {
-    npc_daranelleAI(Creature *c) : ScriptedAI(c) {}
-
-    void Reset()
-    {
-    }
-
-    void EnterCombat(Unit* who)
-    {
-    }
-
-    void MoveInLineOfSight(Unit *who)
-    {
-        if (who->GetTypeId() == TYPEID_PLAYER)
-        {
-            if (who->HasAura(36904, 0))
-            {
-                DoScriptText(SAY_DARANELLE, me, who);
-                //TODO: Move the below to updateAI and run if this statement == true
-                CAST_PLR(who)->KilledMonsterCredit(21511, me->GetGUID());
-                CAST_PLR(who)->RemoveAurasDueToSpell(36904);
-            }
-        }
-
-        ScriptedAI::MoveInLineOfSight(who);
-    }
+    SAY_SPELL_INFLUENCE     = -1000174,
+    SPELL_LASHHAN_CHANNEL   = 36904
 };
 
-CreatureAI* GetAI_npc_daranelle(Creature* creature)
+class npc_daranelle : public CreatureScript
 {
-    return new npc_daranelleAI (creature);
-}
+public:
+    npc_daranelle() : CreatureScript("npc_daranelle") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
+    {
+        return new npc_daranelleAI (pCreature);
+    }
+
+    struct npc_daranelleAI : public ScriptedAI
+    {
+        npc_daranelleAI(Creature *c) : ScriptedAI(c) {}
+
+        void Reset() { }
+
+        void EnterCombat(Unit* /*who*/) {}
+
+        void MoveInLineOfSight(Unit *who)
+        {
+            if (who->GetTypeId() == TYPEID_PLAYER)
+            {
+                if (who->HasAura(SPELL_LASHHAN_CHANNEL) && me->IsWithinDistInMap(who, 10.0f))
+                {
+                    DoScriptText(SAY_SPELL_INFLUENCE, me, who);
+                    //TODO: Move the below to updateAI and run if this statement == true
+                    DoCast(who, 37028, true);
+                }
+            }
+
+            ScriptedAI::MoveInLineOfSight(who);
+        }
+    };
+};
 
 /*######
 ## npc_overseer_nuaar
 ######*/
 
-#define GOSSIP_HON "Overseer, I am here to negotiate on behalf of the Cenarion Expedition."
+#define GOSSIP_HELLO_ON "Overseer, I am here to negotiate on behalf of the Cenarion Expedition."
 
-bool GossipHello_npc_overseer_nuaar(Player* player, Creature* creature)
+class npc_overseer_nuaar : public CreatureScript
 {
-    if (player->GetQuestStatus(10682) == QUEST_STATUS_INCOMPLETE)
-        player->ADD_GOSSIP_ITEM(0, GOSSIP_HON, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+public:
+    npc_overseer_nuaar() : CreatureScript("npc_overseer_nuaar") { }
 
-    player->SEND_GOSSIP_MENU(10532, creature->GetGUID());
-
-    return true;
-}
-
-bool GossipSelect_npc_overseer_nuaar(Player* player, Creature* creature, uint32 sender, uint32 action)
-{
-    if (action == GOSSIP_ACTION_INFO_DEF+1)
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
     {
-        player->SEND_GOSSIP_MENU(10533, creature->GetGUID());
-        player->AreaExploredOrEventHappens(10682);
+        pPlayer->PlayerTalkClass->ClearMenus();
+        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            pPlayer->SEND_GOSSIP_MENU(10533, pCreature->GetGUID());
+            pPlayer->AreaExploredOrEventHappens(10682);
+        }
+        return true;
     }
-    return true;
-}
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pPlayer->GetQuestStatus(10682) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HELLO_ON, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        pPlayer->SEND_GOSSIP_MENU(10532, pCreature->GetGUID());
+
+        return true;
+    }
+};
 
 /*######
 ## npc_saikkal_the_elder
 ######*/
 
-#define GOSSIP_HSTE "Yes... yes, it's me."
-#define GOSSIP_SSTE "Yes elder. Tell me more of the book."
+#define GOSSIP_HELLO_STE    "Yes... yes, it's me."
+#define GOSSIP_SELECT_STE   "Yes elder. Tell me more of the book."
 
-bool GossipHello_npc_saikkal_the_elder(Player* player, Creature* creature)
+class npc_saikkal_the_elder : public CreatureScript
 {
-    if (player->GetQuestStatus(10980) == QUEST_STATUS_INCOMPLETE)
-        player->ADD_GOSSIP_ITEM(0, GOSSIP_HSTE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+public:
+    npc_saikkal_the_elder() : CreatureScript("npc_saikkal_the_elder") { }
 
-    player->SEND_GOSSIP_MENU(10794, creature->GetGUID());
-
-    return true;
-}
-
-bool GossipSelect_npc_saikkal_the_elder(Player* player, Creature* creature, uint32 sender, uint32 action)
-{
-    switch (action)
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
     {
-        case GOSSIP_ACTION_INFO_DEF+1:
-            player->ADD_GOSSIP_ITEM(0, GOSSIP_SSTE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
-            player->SEND_GOSSIP_MENU(10795, creature->GetGUID());
-            break;
-        case GOSSIP_ACTION_INFO_DEF+2:
-            player->TalkedToCreature(creature->GetEntry(), creature->GetGUID());
-            player->SEND_GOSSIP_MENU(10796, creature->GetGUID());
-            break;
+        pPlayer->PlayerTalkClass->ClearMenus();
+        switch (uiAction)
+        {
+            case GOSSIP_ACTION_INFO_DEF+1:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SELECT_STE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+                pPlayer->SEND_GOSSIP_MENU(10795, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+2:
+                pPlayer->TalkedToCreature(pCreature->GetEntry(), pCreature->GetGUID());
+                pPlayer->SEND_GOSSIP_MENU(10796, pCreature->GetGUID());
+                break;
+        }
+        return true;
     }
-    return true;
-}
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pPlayer->GetQuestStatus(10980) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HELLO_STE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        pPlayer->SEND_GOSSIP_MENU(10794, pCreature->GetGUID());
+
+        return true;
+    }
+};
+
+/*######
+## go_legion_obelisk
+######*/
+
+class go_legion_obelisk : public GameObjectScript
+{
+public:
+    go_legion_obelisk() : GameObjectScript("go_legion_obelisk") { }
+
+    bool OnGossipHello(Player* pPlayer, GameObject* pGo)
+    {
+        if (pPlayer->GetQuestStatus(10821) == QUEST_STATUS_INCOMPLETE)
+        {
+            switch(pGo->GetEntry())
+            {
+                case LEGION_OBELISK_ONE:
+                      obelisk_one = true;
+                     break;
+                case LEGION_OBELISK_TWO:
+                      obelisk_two = true;
+                     break;
+                case LEGION_OBELISK_THREE:
+                      obelisk_three = true;
+                     break;
+                case LEGION_OBELISK_FOUR:
+                      obelisk_four = true;
+                     break;
+                case LEGION_OBELISK_FIVE:
+                      obelisk_five = true;
+                     break;
+            }
+
+            if (obelisk_one == true && obelisk_two == true && obelisk_three == true && obelisk_four == true && obelisk_five == true)
+            {
+                pGo->SummonCreature(19963,2943.40f,4778.20f,284.49f,0.94f,TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT,120000);
+                //reset global var
+                obelisk_one = false;
+                obelisk_two = false;
+                obelisk_three = false;
+                obelisk_four = false;
+                obelisk_five = false;
+            }
+        }
+
+        return true;
+    }
+};
 
 /*######
 ## npc_bloodmaul_brutebane
@@ -345,155 +432,111 @@ enum eBloodmaul
     GO_KEG                = 184315
 };
 
-struct npc_bloodmaul_brutebaneAI : public ScriptedAI
+class npc_bloodmaul_brutebane : public CreatureScript
 {
-    npc_bloodmaul_brutebaneAI(Creature *c) : ScriptedAI(c)
+public:
+    npc_bloodmaul_brutebane() : CreatureScript("npc_bloodmaul_brutebane") { }
+
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-       if (Creature* pOgre = me->FindNearestCreature(NPC_OGRE_BRUTE, 50, true))
-       {
-           pOgre->SetReactState(REACT_DEFENSIVE);
-           pOgre->GetMotionMaster()->MovePoint(1, me->GetPositionX()-1, me->GetPositionY()+1, me->GetPositionZ());
-       }
+        return new npc_bloodmaul_brutebaneAI (pCreature);
     }
 
-    uint64 OgreGUID;
-
-    void Reset()
+    struct npc_bloodmaul_brutebaneAI : public ScriptedAI
     {
-        OgreGUID = 0;
-    }
+        npc_bloodmaul_brutebaneAI(Creature *c) : ScriptedAI(c)
+        {
+           if(Creature* Ogre = me->FindNearestCreature(NPC_OGRE_BRUTE, 50, true))
+           {
+               Ogre->SetReactState(REACT_DEFENSIVE);
+               Ogre->GetMotionMaster()->MovePoint(1, me->GetPositionX()-1, me->GetPositionY()+1, me->GetPositionZ());
+           }
+        }
 
-    void UpdateAI(const uint32 /*uiDiff*/) {}
+        uint64 OgreGUID;
+
+        void Reset()
+        {
+            OgreGUID = 0;
+        }
+
+        void UpdateAI(const uint32 /*uiDiff*/) {}
+    };
 };
-
-CreatureAI* GetAI_npc_bloodmaul_brutebane(Creature* creature)
-{
-    return new npc_bloodmaul_brutebaneAI (creature);
-}
 
 /*######
 ## npc_ogre_brute
 ######*/
 
-struct npc_ogre_bruteAI : public ScriptedAI
+class npc_ogre_brute : public CreatureScript
 {
-    npc_ogre_bruteAI(Creature *c) : ScriptedAI(c) {}
+public:
+    npc_ogre_brute() : CreatureScript("npc_ogre_brute") { }
 
-    uint64 PlayerGUID;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        PlayerGUID = 0;
+        return new npc_ogre_bruteAI(pCreature);
     }
 
-    void MoveInLineOfSight(Unit *pWho)
+    struct npc_ogre_bruteAI : public ScriptedAI
     {
-        if (!pWho || (!pWho->isAlive()))
-            return;
+        npc_ogre_bruteAI(Creature *c) : ScriptedAI(c) {}
 
-        if (me->IsWithinDistInMap(pWho, 50.0f) && (pWho->GetTypeId() == TYPEID_PLAYER) && pWho->ToPlayer()->GetQuestStatus(10512) == QUEST_STATUS_INCOMPLETE)
-            PlayerGUID = pWho->GetGUID();
-    }
+        uint64 PlayerGUID;
 
-    void MovementInform(uint32 /*uiMotionType*/, uint32 uiPointId)
-    {
-        if (Player* player = Unit::GetPlayer(*me, PlayerGUID))
+        void Reset()
         {
-            if (uiPointId == 1)
+            PlayerGUID = 0;
+        }
+
+        void MoveInLineOfSight(Unit *who)
+        {
+            if (!who || (!who->isAlive())) return;
+
+            if (me->IsWithinDistInMap(who, 50.0f) && (who->GetTypeId() == TYPEID_PLAYER) && who->ToPlayer()->GetQuestStatus(10512) == QUEST_STATUS_INCOMPLETE)
             {
-                if (GameObject* pKeg = me->FindNearestGameObject(GO_KEG, 20))
-                    pKeg->Delete();
+                PlayerGUID = who->GetGUID();
+            }
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id)
+        {
+            Player* pPlayer = Unit::GetPlayer(*me, PlayerGUID);
+            if (id == 1)
+            {
+                GameObject* Keg = me->FindNearestGameObject(GO_KEG, 20);
+                if (Keg)
+                    Keg->Delete();
                 me->HandleEmoteCommand(7);
                 me->SetReactState(REACT_AGGRESSIVE);
                 me->GetMotionMaster()->MoveTargetedHome();
-                if (Creature* pCredit = me->FindNearestCreature(NPC_QUEST_CREDIT, 50, true))
-                    player->KilledMonsterCredit(NPC_QUEST_CREDIT, pCredit->GetGUID());
+                Creature* Credit = me->FindNearestCreature(NPC_QUEST_CREDIT, 50, true);
+                if (pPlayer && Credit)
+                    pPlayer->KilledMonster(Credit->GetCreatureInfo(), Credit->GetGUID());
             }
         }
-    }
 
-    void UpdateAI(const uint32 /*diff*/)
-    {
-        if (!UpdateVictim())
-            return;
-        DoMeleeAttackIfReady();
-    }
+        void UpdateAI(const uint32 /*diff*/)
+        {
+            if (!UpdateVictim())
+                return;
+            DoMeleeAttackIfReady();
+        }
+    };
 };
 
-CreatureAI* GetAI_npc_ogre_brute(Creature* creature)
-{
-    return new npc_ogre_bruteAI(creature);
-}
-
-/*#########
-# go_thunderspike
-# UPDATE `gameobject_template` SET `ScriptName` = "go_thunderspike" WHERE `entry` = 184729;
-#########*/
-
-#define Q_THE_THUNDERSPIKE 10526
-#define GOR_GRIMGUT_ENTRY  21319
-
-bool GOUse_go_thunderspike(Player* player, GameObject* _GO)
-{
-    if (player->GetQuestStatus(Q_THE_THUNDERSPIKE) == QUEST_STATUS_INCOMPLETE)
-    {
-        // to prevent spawn spam :)
-        if (Creature *pGor = GetClosestCreatureWithEntry(player, GOR_GRIMGUT_ENTRY, 50.0f, true))
-        {
-            if (!pGor->getVictim())
-                pGor->AI()->AttackStart(player);
-
-            return false;
-        }
-
-        Position dest;
-        //player->GetValidPointInAngle(dest, 5.0f, frand(0.0f, 2*M_PI), true);
-        player->GetPosition(&dest);
-        if (Creature* pGor = player->SummonCreature(GOR_GRIMGUT_ENTRY, dest.m_positionX, dest.m_positionY, dest.m_positionZ, 0.0f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000))
-            pGor->AI()->AttackStart(player);
-    }
-
-    return false;
-}
+/*######
+## AddSC
+######*/
 
 void AddSC_blades_edge_mountains()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "mobs_nether_drake";
-    newscript->GetAI = &GetAI_mobs_nether_drake;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_daranelle";
-    newscript->GetAI = &GetAI_npc_daranelle;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_overseer_nuaar";
-    newscript->pGossipHello = &GossipHello_npc_overseer_nuaar;
-    newscript->pGossipSelect = &GossipSelect_npc_overseer_nuaar;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_saikkal_the_elder";
-    newscript->pGossipHello = &GossipHello_npc_saikkal_the_elder;
-    newscript->pGossipSelect = &GossipSelect_npc_saikkal_the_elder;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_bloodmaul_brutebane";
-    newscript->GetAI = &GetAI_npc_bloodmaul_brutebane;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_ogre_brute";
-    newscript->GetAI = &GetAI_npc_ogre_brute;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "go_thunderspike";
-    newscript->pGOHello = &GOUse_go_thunderspike;
-    newscript->RegisterSelf();
+    new mobs_bladespire_ogre();
+    new mobs_nether_drake();
+    new npc_daranelle();
+    new npc_overseer_nuaar();
+    new npc_saikkal_the_elder();
+    new go_legion_obelisk();
+    new npc_bloodmaul_brutebane();
+    new npc_ogre_brute();
 }

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,67 +31,69 @@ EndScriptData */
 #define SPELL_HEX               16708
 #define SPELL_CLEAVE            20691
 
-struct boss_shadowvoshAI : public ScriptedAI
+class boss_shadow_hunter_voshgajin : public CreatureScript
 {
-    boss_shadowvoshAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_shadow_hunter_voshgajin() : CreatureScript("boss_shadow_hunter_voshgajin") { }
 
-    uint32 CurseOfBlood_Timer;
-    uint32 Hex_Timer;
-    uint32 Cleave_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        CurseOfBlood_Timer = 2000;
-        Hex_Timer = 8000;
-        Cleave_Timer = 14000;
-
-        //DoCast(me, SPELL_ICEARMOR, true);
+        return new boss_shadowvoshAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/){}
-
-    void UpdateAI(const uint32 diff)
+    struct boss_shadowvoshAI : public ScriptedAI
     {
-        //Return since we have no target
-        if (!UpdateVictim())
-            return;
+        boss_shadowvoshAI(Creature *c) : ScriptedAI(c) {}
 
-        //CurseOfBlood_Timer
-        if (CurseOfBlood_Timer <= diff)
+        uint32 CurseOfBlood_Timer;
+        uint32 Hex_Timer;
+        uint32 Cleave_Timer;
+
+        void Reset()
         {
-            DoCast(me->getVictim(), SPELL_CURSEOFBLOOD);
-            CurseOfBlood_Timer = 45000;
-        } else CurseOfBlood_Timer -= diff;
+            CurseOfBlood_Timer = 2000;
+            Hex_Timer = 8000;
+            Cleave_Timer = 14000;
 
-        //Hex_Timer
-        if (Hex_Timer <= diff)
+            //DoCast(me, SPELL_ICEARMOR, true);
+        }
+
+        void EnterCombat(Unit * /*who*/){}
+
+        void UpdateAI(const uint32 diff)
         {
-            if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                DoCast(pTarget, SPELL_HEX);
-            Hex_Timer = 15000;
-        } else Hex_Timer -= diff;
+            //Return since we have no target
+            if (!UpdateVictim())
+                return;
 
-        //Cleave_Timer
-        if (Cleave_Timer <= diff)
-        {
-            DoCast(me->getVictim(), SPELL_CLEAVE);
-            Cleave_Timer = 7000;
-        } else Cleave_Timer -= diff;
+            //CurseOfBlood_Timer
+            if (CurseOfBlood_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_CURSEOFBLOOD);
+                CurseOfBlood_Timer = 45000;
+            } else CurseOfBlood_Timer -= diff;
 
-        DoMeleeAttackIfReady();
-    }
+            //Hex_Timer
+            if (Hex_Timer <= diff)
+            {
+                if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
+                    DoCast(pTarget, SPELL_HEX);
+                Hex_Timer = 15000;
+            } else Hex_Timer -= diff;
+
+            //Cleave_Timer
+            if (Cleave_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_CLEAVE);
+                Cleave_Timer = 7000;
+            } else Cleave_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_shadowvosh(Creature* creature)
-{
-    return new boss_shadowvoshAI (creature);
-}
 
 void AddSC_boss_shadowvosh()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_shadow_hunter_voshgajin";
-    newscript->GetAI = &GetAI_boss_shadowvosh;
-    newscript->RegisterSelf();
+    new boss_shadow_hunter_voshgajin();
 }
-

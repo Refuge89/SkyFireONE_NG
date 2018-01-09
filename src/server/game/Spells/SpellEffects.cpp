@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -221,7 +221,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 
 void Spell::EffectNULL(SpellEffIndex /*effIndex*/)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Spell Effect DUMMY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Spell Effect DUMMY");
 }
 
 void Spell::EffectUnused(SpellEffIndex /*effIndex*/)
@@ -958,7 +958,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                     Creature* creatureTarget = unitTarget->ToCreature();
 
                     GameObject* Crystal_Prison = m_caster->SummonGameObject(179644, creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(), creatureTarget->GetOrientation(), 0, 0, 0, 0, creatureTarget->GetRespawnTime()-time(NULL));
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "SummonGameObject at SpellEfects.cpp EffectDummy for Spell 23019");
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "SummonGameObject at SpellEfects.cpp EffectDummy for Spell 23019");
 
                     creatureTarget->ForcedDespawn();
 
@@ -1862,7 +1862,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
     }
 
     if (unitTarget && unitTarget->GetTypeId() == TYPEID_UNIT)
-        sScriptMgr->EffectDummyCreature(m_caster, m_spellInfo->Id, effIndex, unitTarget->ToCreature());
+        sScriptMgr->OnDummyEffect(m_caster, m_spellInfo->Id, effIndex, unitTarget->ToCreature());
 }
 
 void Spell::EffectTriggerSpellWithValue(SpellEffIndex effIndex)
@@ -2113,7 +2113,7 @@ void Spell::EffectTriggerMissileSpell(SpellEffIndex effIndex)
     }
 
     if (m_CastItem)
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: cast Item spellId - %i", spellInfo->Id);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: cast Item spellId - %i", spellInfo->Id);
 
     Spell *spell = new Spell(m_caster, spellInfo, true, m_originalCasterGUID);
 
@@ -2143,7 +2143,7 @@ void Spell::EffectTeleportUnits(SpellEffIndex effIndex)
     m_targets.m_dstPos.GetPosition(x, y, z, orientation);
     if (!orientation && m_targets.getUnitTarget())
         orientation = m_targets.getUnitTarget()->GetOrientation();
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
 
     if (mapid == unitTarget->GetMapId())
         unitTarget->NearTeleportTo(x, y, z, orientation, unitTarget == m_caster);
@@ -2261,7 +2261,7 @@ void Spell::EffectApplyAura(SpellEffIndex effIndex)
     if (!caster)
         return;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[effIndex]);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: Aura is: %u", m_spellInfo->EffectApplyAuraName[effIndex]);
 
     Aura* Aur = CreateAura(m_spellInfo, effIndex, &damage, unitTarget, caster, m_CastItem);
 
@@ -2322,7 +2322,7 @@ void Spell::EffectApplyAura(SpellEffIndex effIndex)
             // applied at target by target
             Aura* AdditionalAura = CreateAura(AdditionalSpellInfo, 0, NULL, unitTarget, unitTarget, 0);
             unitTarget->AddAura(AdditionalAura);
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: Additional Aura is: %u", AdditionalSpellInfo->EffectApplyAuraName[0]);
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: Additional Aura is: %u", AdditionalSpellInfo->EffectApplyAuraName[0]);
         }
     }
 
@@ -2341,7 +2341,7 @@ void Spell::EffectUnlearnSpecialization(SpellEffIndex effIndex)
 
     _player->removeSpell(spellToUnlearn);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: Player %u has unlearned spell %u from NpcGUID: %u", _player->GetGUIDLow(), spellToUnlearn, m_caster->GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: Player %u has unlearned spell %u from NpcGUID: %u", _player->GetGUIDLow(), spellToUnlearn, m_caster->GetGUIDLow());
 }
 
 void Spell::EffectPowerDrain(SpellEffIndex effIndex)
@@ -2408,36 +2408,36 @@ void Spell::EffectSendEvent(SpellEffIndex effIndex)
                     /*do not uncomment .
                     if (bg->GetTypeID() == BATTLEGROUND_WS)
                         bg->EventPlayerClickedOnFlag((Player*)m_caster, gameObjTarget);
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Send Event Horde Flag Picked Up");
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Send Event Horde Flag Picked Up");
                     break;
                     /* not used :
                     case 23334:                                 // Drop Horde Flag
                         if (bg->GetTypeID() == BATTLEGROUND_WS)
                             bg->EventPlayerDroppedFlag((Player*)m_caster);
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Drop Horde Flag");
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Drop Horde Flag");
                         break;
                     */
                 case 23335:                                 // Pickup Alliance Flag
                     /*do not uncomment ... (it will cause crash, because of null targetobject!) anyway this is a bad way to call that event, because it would cause recursion
                     if (bg->GetTypeID() == BATTLEGROUND_WS)
                         bg->EventPlayerClickedOnFlag((Player*)m_caster, gameObjTarget);
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Send Event Alliance Flag Picked Up");
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Send Event Alliance Flag Picked Up");
                     break;
                     /* not used :
                     case 23336:                                 // Drop Alliance Flag
                         if (bg->GetTypeID() == BATTLEGROUND_WS)
                             bg->EventPlayerDroppedFlag((Player*)m_caster);
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Drop Alliance Flag");
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Drop Alliance Flag");
                         break;
                     case 23385:                                 // Alliance Flag Returns
                         if (bg->GetTypeID() == BATTLEGROUND_WS)
                             bg->EventPlayerClickedOnFlag((Player*)m_caster, gameObjTarget);
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Alliance Flag Returned");
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Alliance Flag Returned");
                         break;
                     case 23386:                                   // Horde Flag Returns
                         if (bg->GetTypeID() == BATTLEGROUND_WS)
                             bg->EventPlayerClickedOnFlag((Player*)m_caster, gameObjTarget);
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Horde Flag Returned");
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Horde Flag Returned");
                         break;*/
                 case 34976:
                     /*
@@ -2446,12 +2446,12 @@ void Spell::EffectSendEvent(SpellEffIndex effIndex)
                     */
                     break;
                 default:
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Unknown spellid %u in BG event", m_spellInfo->Id);
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Unknown spellid %u in BG event", m_spellInfo->Id);
                     break;
             }
         }
     }
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effIndex], m_spellInfo->Id);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[effIndex], m_spellInfo->Id);
 
     m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[effIndex], m_caster, focusObject);
 }
@@ -2627,7 +2627,7 @@ void Spell::EffectHealthLeech(SpellEffIndex effIndex)
     if (damage < 0)
         return;
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "HealthLeech :%i", damage);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "HealthLeech :%i", damage);
 
     float multiplier = m_spellInfo->EffectMultipleValue[effIndex];
 
@@ -2905,7 +2905,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
 
     if (gameObjTarget)
     {
-        if (sScriptMgr->GOHello(player, gameObjTarget))
+        if (sScriptMgr->OnGossipHello(player, gameObjTarget))
             return;
 
         switch (gameObjTarget->GetGoType())
@@ -2932,7 +2932,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
                 // goober_scripts can be triggered if the player don't have the quest
                 if (gameObjTarget->GetGOInfo()->goober.eventId)
                 {
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Goober ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->goober.eventId, gameObjTarget->GetDBTableGUIDLow());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Goober ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->goober.eventId, gameObjTarget->GetDBTableGUIDLow());
                     player->GetMap()->ScriptsStart(sEventScripts, gameObjTarget->GetGOInfo()->goober.eventId, player, gameObjTarget);
                 }
 
@@ -2942,7 +2942,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
                     if (player->GetQuestStatus(gameObjTarget->GetGOInfo()->goober.questId) != QUEST_STATUS_INCOMPLETE)
                         return;
 
-                sScriptMgr->GOHello(player, gameObjTarget);
+                sScriptMgr->OnGossipHello(player, gameObjTarget);
                 player->GetMap()->ScriptsStart(sGameObjectScripts, gameObjTarget->GetDBTableGUIDLow(), player, gameObjTarget);
 
                 gameObjTarget->AddUniqueUse(player);
@@ -2964,7 +2964,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
                 // TODO: possible must be moved to loot release (in different from linked triggering)
                 if (gameObjTarget->GetGOInfo()->chest.eventId)
                 {
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "Chest ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->chest.eventId, gameObjTarget->GetDBTableGUIDLow());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "Chest ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->chest.eventId, gameObjTarget->GetDBTableGUIDLow());
                     player->GetMap()->ScriptsStart(sEventScripts, gameObjTarget->GetGOInfo()->chest.eventId, player, gameObjTarget);
                 }
 
@@ -2986,7 +2986,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
 {
     if (!m_caster || m_caster->GetTypeId() != TYPEID_PLAYER)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Open Lock - No Player Caster!");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Open Lock - No Player Caster!");
         return;
     }
 
@@ -2999,7 +2999,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     // Get lockId
     if (gameObjTarget)
     {
-        GameObjectInfo const* goInfo = gameObjTarget->GetGOInfo();
+        GameObjectTemplate const* goInfo = gameObjTarget->GetGOInfo();
         // Arathi Basin banner opening !
         if (goInfo->type == GAMEOBJECT_TYPE_BUTTON && goInfo->button.noDamageImmune ||
             goInfo->type == GAMEOBJECT_TYPE_GOOBER && goInfo->goober.losOK)
@@ -3039,7 +3039,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     }
     else
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Open Lock - No GameObject/Item Target!");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Open Lock - No GameObject/Item Target!");
         return;
     }
 
@@ -3403,7 +3403,7 @@ void Spell::EffectLearnSpell(SpellEffIndex effIndex)
     uint32 spellToLearn = (m_spellInfo->Id == SPELL_ID_GENERIC_LEARN) ? damage : m_spellInfo->EffectTriggerSpell[effIndex];
     player->learnSpell(spellToLearn);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell: Player %u has learned spell %u from NpcGUID=%u", player->GetGUIDLow(), spellToLearn, m_caster->GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell: Player %u has learned spell %u from NpcGUID=%u", player->GetGUIDLow(), spellToLearn, m_caster->GetGUIDLow());
 }
 
 void Spell::EffectDispel(SpellEffIndex effIndex)
@@ -3526,7 +3526,7 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
                     case 27276: heal_spell = 27278; break;
                     case 27277: heal_spell = 27279; break;
                     default:
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell for Devour Magic %d not handled in Spell::EffectDispel", m_spellInfo->Id);
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell for Devour Magic %d not handled in Spell::EffectDispel", m_spellInfo->Id);
                         break;
                 }
                 if (heal_spell)
@@ -3558,7 +3558,7 @@ void Spell::EffectDualWield(SpellEffIndex /*effIndex*/)
 void Spell::EffectPull(SpellEffIndex /*effIndex*/)
 {
     // TODO: create a proper pull towards distract spell center for distract
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: Spell Effect DUMMY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Spell Effect DUMMY");
 }
 
 void Spell::EffectDistract(SpellEffIndex /*effIndex*/)
@@ -3607,7 +3607,7 @@ void Spell::EffectPickPocket(SpellEffIndex effIndex)
         if (chance > irand(0, 19))
         {
             // Stealing successful
-            //sLog->outDebug (LOG_FILTER_NETWORKIO, "Sending loot from pickpocket");
+            //sLog->outDebug(LOG_FILTER_NETWORKIO, "Sending loot from pickpocket");
             m_caster->ToPlayer()->SendLoot(unitTarget->GetGUID(), LOOT_PICKPOCKETING);
         }
         else
@@ -3685,7 +3685,7 @@ void Spell::EffectAddHonor(SpellEffIndex effIndex)
     // 2.4.3 honor-spells don't scale with level and won't be casted by an item
     // also we must use damage+1 (spelldescription says +25 honor but damage is only 24)
     unitTarget->ToPlayer()->RewardHonor(NULL, 1, damage + 1);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, unitTarget->ToPlayer()->GetGUIDLow());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "SpellEffect::AddHonor (spell_id %u) rewards %u honor points (non scale) for player: %u", m_spellInfo->Id, damage, unitTarget->ToPlayer()->GetGUIDLow());
 }
 
 void Spell::EffectTradeSkill(SpellEffIndex effIndex)
@@ -5160,7 +5160,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
     }
 
     // normal DB scripted effect
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell ScriptStart spellid %u in EffectScriptEffect ", m_spellInfo->Id);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell ScriptStart spellid %u in EffectScriptEffect ", m_spellInfo->Id);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, m_spellInfo->Id, m_caster, unitTarget);
 }
 
@@ -5309,7 +5309,7 @@ void Spell::EffectStuck(SpellEffIndex effIndex)
 
     Player* pTarget = unitTarget->ToPlayer();
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Spell Effect: Stuck");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Spell Effect: Stuck");
     sLog->outDetail("Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", pTarget->GetName(), pTarget->GetGUIDLow(), m_caster->GetMapId(), m_caster->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ());
 
     if (pTarget->isInFlight())
@@ -6031,7 +6031,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
 {
     uint32 name_id = m_spellInfo->EffectMiscValue[effIndex];
 
-    GameObjectInfo const* goinfo = sObjectMgr->GetGameObjectInfo(name_id);
+    GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectInfo(name_id);
 
     if (!goinfo)
     {
@@ -6133,7 +6133,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
     //pGameObj->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel());
     pGameObj->SetSpellId(m_spellInfo->Id);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "AddObject at SpellEfects.cpp EffectTransmitted");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "AddObject at SpellEfects.cpp EffectTransmitted");
     //m_caster->AddGameObject(pGameObj);
     //m_ObjToDel.push_back(pGameObj);
 
@@ -6189,7 +6189,7 @@ void Spell::EffectProspecting(SpellEffIndex effIndex)
 
 void Spell::EffectSkill(SpellEffIndex effIndex)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "WORLD: SkillEFFECT");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: SkillEFFECT");
 }
 
 /* There is currently no need for this effect. We handle it in Battleground.cpp
@@ -6216,7 +6216,7 @@ void Spell::EffectSpiritHeal(SpellEffIndex effIndex)
 // remove insignia spell effect
 void Spell::EffectSkinPlayerCorpse(SpellEffIndex effIndex)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Effect: SkinPlayerCorpse");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Effect: SkinPlayerCorpse");
     if ((m_caster->GetTypeId() != TYPEID_PLAYER) || (unitTarget->GetTypeId() != TYPEID_PLAYER) || (unitTarget->isAlive()))
         return;
 
@@ -6225,7 +6225,7 @@ void Spell::EffectSkinPlayerCorpse(SpellEffIndex effIndex)
 
 void Spell::EffectStealBeneficialBuff(SpellEffIndex effIndex)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Effect: StealBeneficialBuff");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Effect: StealBeneficialBuff");
 
     if (!unitTarget || unitTarget == m_caster)                 // can't steal from self
         return;
@@ -6357,11 +6357,11 @@ void Spell::EffectBind(SpellEffIndex effIndex)
     data << uint32(area_id);
     player->SendDirectMessage(&data);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Home Position X is %f", loc.GetPositionX());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Home Position Y is %f", loc.GetPositionY());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Home Position Z is %f", loc.GetPositionZ());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Home MapId is %u", loc.GetMapId());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "New Home AreaId is %u", area_id);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Home Position X is %f", loc.GetPositionX());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Home Position Y is %f", loc.GetPositionY());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Home Position Z is %f", loc.GetPositionZ());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Home MapId is %u", loc.GetMapId());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "New Home AreaId is %u", area_id);
 
     // zone update
     data.Initialize(SMSG_PLAYERBOUND, 8+4);

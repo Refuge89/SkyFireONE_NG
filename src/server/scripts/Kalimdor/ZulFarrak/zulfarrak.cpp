@@ -1,22 +1,23 @@
- /*
-  * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
-  * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
-  * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-  * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
-  *
-  * This program is free software; you can redistribute it and/or modify it
-  * under the terms of the GNU General Public License as published by the
-  * Free Software Foundation; either version 2 of the License, or (at your
-  * option) any later version.
-  *
-  * This program is distributed in the hope that it will be useful, but WITHOUT
-  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-  * more details.
-  *
-  * You should have received a copy of the GNU General Public License along
-  * with this program. If not, see <http://www.gnu.org/licenses/>.
-  */
+/*
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
+ * Copyright (C) 2006-2017 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/> 
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /* ScriptData
 SDName: Zulfarrak
@@ -30,254 +31,438 @@ npc_sergeant_bly
 npc_weegli_blastfuse
 EndContentData */
 
-#include "ScriptPCH.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
+#include "ScriptedGossip.h"
+#include "zulfarrak.h"
+#include "Player.h"
 
 /*######
 ## npc_sergeant_bly
 ######*/
 
-#define FACTION_HOSTILE             14
-#define FACTION_FRIENDLY            35
+enum blyAndCrewFactions
+{
+    FACTION_HOSTILE           = 14,
+    FACTION_FRIENDLY          = 35,  //while in cages (so the trolls won't attack them while they're caged)
+    FACTION_FREED             = 250  //after release (so they'll be hostile towards trolls)
+};
 
-#define SPELL_SHIELD_BASH           11972
-#define SPELL_REVENGE               12170
+enum blySays
+{
+    SAY_1 = 0,
+    SAY_2 = 1
+};
+
+enum blySpells
+{
+    SPELL_SHIELD_BASH          = 11972,
+    SPELL_REVENGE              = 12170
+};
 
 #define GOSSIP_BLY                  "[PH] In that case, I will take my reward!"
 
-struct npc_sergeant_blyAI : public ScriptedAI
+class npc_sergeant_bly : public CreatureScript
 {
-    npc_sergeant_blyAI(Creature *c) : ScriptedAI(c)
+public:
+    npc_sergeant_bly() : CreatureScript("npc_sergeant_bly") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
-        //instance = c->GetInstanceScript();
-    }
-
-    //ScriptedInstance* instance;
-
-    uint32 ShieldBash_Timer;
-    uint32 Revenge_Timer;                                   //this is wrong, spell should never be used unless me->getVictim() dodge, parry or block attack. Skyfire support required.
-
-    void Reset()
-    {
-        ShieldBash_Timer = 5000;
-        Revenge_Timer = 8000;
-
-        me->setFaction(FACTION_FRIENDLY);
-
-        /*if (instance)
-            instance->SetData(0, NOT_STARTED);*/
-    }
-
-    void EnterCombat(Unit * /*who*/)
-    {
-        /*if (instance)
-            instance->SetData(0, IN_PROGRESS);*/
-    }
-
-    void JustDied(Unit * /*victim*/)
-    {
-        /*if (instance)
-            instance->SetData(0, DONE);*/
-    }
-
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
-
-        if (ShieldBash_Timer <= diff)
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
         {
-            DoCast(me->getVictim(), SPELL_SHIELD_BASH);
-            ShieldBash_Timer = 15000;
-        } else ShieldBash_Timer -= diff;
+            player->CLOSE_GOSSIP_MENU();
+            CAST_AI(npc_sergeant_bly::npc_sergeant_blyAI, creature->AI())->PlayerGUID = player->GetGUID();
+            creature->AI()->DoAction(0);
+        }
+        return true;
+    }
 
-        if (Revenge_Timer <= diff)
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (InstanceScript* instance = creature->GetInstanceScript())
         {
-            DoCast(me->getVictim(), SPELL_REVENGE);
-            Revenge_Timer = 10000;
-        } else Revenge_Timer -= diff;
+            if (instance->GetData(EVENT_PYRAMID) == PYRAMID_KILLED_ALL_TROLLS)
+            {
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_BLY, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+                player->SEND_GOSSIP_MENU(1517, creature->GetGUID());
+            }
+            else
+                if (instance->GetData(EVENT_PYRAMID) == PYRAMID_NOT_STARTED)
+                    player->SEND_GOSSIP_MENU(1515, creature->GetGUID());
+                else
+                    player->SEND_GOSSIP_MENU(1516, creature->GetGUID());
+            return true;
+        }
+        return false;
+    }
 
-        DoMeleeAttackIfReady();
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_sergeant_blyAI (creature);
+    }
+
+    struct npc_sergeant_blyAI : public ScriptedAI
+    {
+        npc_sergeant_blyAI(Creature* creature) : ScriptedAI(creature)
+        {
+            instance = creature->GetInstanceScript();
+            postGossipStep = 0;
+        }
+
+        InstanceScript* instance;
+
+        uint32 postGossipStep;
+        uint32 Text_Timer;
+        uint32 ShieldBash_Timer;
+        uint32 Revenge_Timer;                                   //this is wrong, spell should never be used unless me->getVictim() dodge, parry or block attack. Trinity support required.
+        uint64 PlayerGUID;
+
+        void Reset()
+        {
+            ShieldBash_Timer = 5000;
+            Revenge_Timer = 8000;
+
+            me->setFaction(FACTION_FRIENDLY);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (postGossipStep>0 && postGossipStep<4)
+            {
+                if (Text_Timer<diff)
+                {
+                    switch (postGossipStep)
+                    {
+                        case 1:
+                            //weegli doesn't fight - he goes & blows up the door
+                            if (Creature* pWeegli = instance->instance->GetCreature(instance->GetData64(ENTRY_WEEGLI)))
+                                pWeegli->AI()->DoAction(0);
+                            Talk(SAY_1);
+                            Text_Timer = 5000;
+                            break;
+                        case 2:
+                            Talk(SAY_2);
+                            Text_Timer = 5000;
+                            break;
+                        case 3:
+                            me->setFaction(FACTION_HOSTILE);
+                            if (Player* target = Player::GetPlayer(*me, PlayerGUID))
+                                AttackStart(target);
+
+                            if (instance)
+                            {
+                                switchFactionIfAlive(instance, ENTRY_RAVEN);
+                                switchFactionIfAlive(instance, ENTRY_ORO);
+                                switchFactionIfAlive(instance, ENTRY_MURTA);
+                            }
+                    }
+                    postGossipStep++;
+                }
+                else Text_Timer -= diff;
+            }
+
+            if (!UpdateVictim())
+                return;
+
+            if (ShieldBash_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SHIELD_BASH);
+                ShieldBash_Timer = 15000;
+            }
+            else
+                ShieldBash_Timer -= diff;
+
+            if (Revenge_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_REVENGE);
+                Revenge_Timer = 10000;
+            }
+            else
+                Revenge_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+
+        void DoAction(const int32 /*param*/)
+        {
+            postGossipStep=1;
+            Text_Timer = 0;
+        }
+
+        void switchFactionIfAlive(InstanceScript* instance, uint32 entry)
+        {
+           if (Creature* crew = instance->instance->GetCreature(instance->GetData64(entry)))
+               if (crew->isAlive())
+                   crew->setFaction(FACTION_HOSTILE);
+        }
+    };
+};
+
+/*######
++## go_troll_cage
++######*/
+
+class go_troll_cage : public GameObjectScript
+{
+public:
+    go_troll_cage() : GameObjectScript("go_troll_cage") { }
+
+    bool OnGossipHello(Player* /*player*/, GameObject* go)
+    {
+        if (InstanceScript* instance = go->GetInstanceScript())
+        {
+            instance->SetData(EVENT_PYRAMID, PYRAMID_CAGES_OPEN);
+            //set bly & co to aggressive & start moving to top of stairs
+            initBlyCrewMember(instance, ENTRY_BLY, 1884.99f, 1263, 41.52f);
+            initBlyCrewMember(instance, ENTRY_RAVEN, 1882.5f, 1263, 41.52f);
+            initBlyCrewMember(instance, ENTRY_ORO, 1886.47f, 1270.68f, 41.68f);
+            initBlyCrewMember(instance, ENTRY_WEEGLI, 1890, 1263, 41.52f);
+            initBlyCrewMember(instance, ENTRY_MURTA, 1891.19f, 1272.03f, 41.60f);
+        }
+        return false;
+    }
+
+private:
+    void initBlyCrewMember(InstanceScript* instance, uint32 entry, float x, float y, float z)
+    {
+        if (Creature* crew = instance->instance->GetCreature(instance->GetData64(entry)))
+        {
+            crew->SetReactState(REACT_AGGRESSIVE);
+            crew->SetWalk(true);
+            crew->SetHomePosition(x, y, z, 0);
+            crew->GetMotionMaster()->MovePoint(1, x, y, z);
+            crew->setFaction(FACTION_FREED);
+        }
     }
 };
-CreatureAI* GetAI_npc_sergeant_bly(Creature* creature)
-{
-    return new npc_sergeant_blyAI (creature);
-}
-
-bool GossipHello_npc_sergeant_bly(Player* player, Creature* creature)
-{
-    /*if (instance->GetData(0) == DONE)
-    {*/
-    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_BLY, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
-    player->SEND_GOSSIP_MENU(1517, creature->GetGUID());
-    /*}
-    else if (instance->GetData(0) == IN_PROGRESS)
-        player->SEND_GOSSIP_MENU(1516, creature->GetGUID());
-    else
-        player->SEND_GOSSIP_MENU(1515, creature->GetGUID());*/
-
-    return true;
-}
-
-bool GossipSelect_npc_sergeant_bly(Player* player, Creature* creature, uint32 /*uiSender*/, uint32 uiAction)
-{
-    if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
-    {
-        player->CLOSE_GOSSIP_MENU();
-        creature->setFaction(FACTION_HOSTILE);
-        CAST_AI(npc_sergeant_blyAI, creature->AI())->AttackStart(player);
-    }
-    return true;
-}
 
 /*######
 ## npc_weegli_blastfuse
 ######*/
 
-#define SPELL_BOMB                  8858
-#define SPELL_GOBLIN_LAND_MINE      21688
-#define SPELL_SHOOT                 6660
-#define SPELL_WEEGLIS_BARREL        10772
+enum weegliSpells
+{
+    SPELL_BOMB                  = 8858,
+    SPELL_GOBLIN_LAND_MINE      = 21688,
+    SPELL_SHOOT                 = 6660,
+    SPELL_WEEGLIS_BARREL        = 10772
+};
+
+enum weegliSays
+{
+    SAY_WEEGLI_OHNO             = 0,
+    SAY_WEEGLI_OK_I_GO          = 1
+};
 
 #define GOSSIP_WEEGLI               "[PH] Please blow up the door."
 
-struct npc_weegli_blastfuseAI : public ScriptedAI
+class npc_weegli_blastfuse : public CreatureScript
 {
-    npc_weegli_blastfuseAI(Creature *c) : ScriptedAI(c)
+public:
+    npc_weegli_blastfuse() : CreatureScript("npc_weegli_blastfuse") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
-        //instance = c->GetInstanceScript();
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            player->CLOSE_GOSSIP_MENU();
+            //here we make him run to door, set the charge and run away off to nowhere
+            creature->AI()->DoAction(0);
+        }
+        return true;
     }
 
-    //ScriptedInstance* instance;
-
-    void Reset()
+    bool OnGossipHello(Player* player, Creature* creature)
     {
-        /*if (instance)
-            instance->SetData(0, NOT_STARTED);*/
+        if (InstanceScript* instance = creature->GetInstanceScript())
+        {
+            switch (instance->GetData(EVENT_PYRAMID))
+            {
+                case PYRAMID_KILLED_ALL_TROLLS:
+                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_WEEGLI, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+                    player->SEND_GOSSIP_MENU(1514, creature->GetGUID());  //if event can proceed to end
+                    break;
+                case PYRAMID_NOT_STARTED:
+                    player->SEND_GOSSIP_MENU(1511, creature->GetGUID());  //if event not started
+                    break;
+                default:
+                    player->SEND_GOSSIP_MENU(1513, creature->GetGUID());  //if event are in progress
+            }
+            return true;
+        }
+        return false;
     }
 
-    void EnterCombat(Unit * /*who*/)
+    CreatureAI* GetAI(Creature* creature) const
     {
-        /*if (instance)
-            instance->SetData(0, IN_PROGRESS);*/
+        return new npc_weegli_blastfuseAI (creature);
     }
 
-    void JustDied(Unit * /*victim*/)
+    struct npc_weegli_blastfuseAI : public ScriptedAI
     {
-        /*if (instance)
-            instance->SetData(0, DONE);*/
-    }
+        npc_weegli_blastfuseAI(Creature* creature) : ScriptedAI(creature)
+        {
+            instance = creature->GetInstanceScript();
+            destroyingDoor=false;
+            Bomb_Timer = 10000;
+            LandMine_Timer = 30000;
+        }
 
-    void UpdateAI(const uint32 /*diff*/)
-    {
-        if (!UpdateVictim())
-            return;
+        uint32 Bomb_Timer;
+        uint32 LandMine_Timer;
+        bool destroyingDoor;
+        InstanceScript* instance;
 
-        DoMeleeAttackIfReady();
-    }
+        void Reset()
+        {
+            /*if (instance)
+                instance->SetData(0, NOT_STARTED);*/
+        }
+
+        void AttackStart(Unit* victim)
+        {
+            AttackStartCaster(victim, 10);//keep back & toss bombs/shoot
+        }
+
+        void JustDied(Unit* /*killer*/)
+        {
+            /*if (instance)
+                instance->SetData(0, DONE);*/
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (Bomb_Timer < diff)
+            {
+                DoCast(me->getVictim(), SPELL_BOMB);
+                Bomb_Timer = 10000;
+            }
+            else
+                Bomb_Timer -= diff;
+
+            if (me->isAttackReady() && !me->IsWithinMeleeRange(me->getVictim()))
+            {
+                DoCast(me->getVictim(), SPELL_SHOOT);
+                me->SetSheath(SHEATH_STATE_RANGED);
+            }
+            else
+            {
+                me->SetSheath(SHEATH_STATE_MELEE);
+                DoMeleeAttackIfReady();
+            }
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 /*id*/)
+        {
+            if (instance)
+            {
+                if (instance->GetData(EVENT_PYRAMID) == PYRAMID_CAGES_OPEN)
+                {
+                    instance->SetData(EVENT_PYRAMID, PYRAMID_ARRIVED_AT_STAIR);
+                    Talk(SAY_WEEGLI_OHNO);
+                    me->SetHomePosition(1882.69f, 1272.28f, 41.87f, 0);
+                }
+                else
+                    if (destroyingDoor)
+                    {
+                        instance->DoUseDoorOrButton(instance->GetData64(GO_END_DOOR));
+                        //TODO: leave the area...
+                        me->DespawnOrUnsummon();
+                    };
+            }
+        }
+
+        void DoAction(const int32 /*param*/)
+        {
+            DestroyDoor();
+        }
+
+        void DestroyDoor()
+        {
+            if (me->isAlive())
+            {
+                me->setFaction(FACTION_FRIENDLY);
+                me->GetMotionMaster()->MovePoint(0, 1858.57f, 1146.35f, 14.745f);
+                me->SetHomePosition(1858.57f, 1146.35f, 14.745f, 3.85f); // in case he gets interrupted
+                Talk(SAY_WEEGLI_OK_I_GO);
+                destroyingDoor=true;
+            }
+        }
+    };
 };
-CreatureAI* GetAI_npc_weegli_blastfuse(Creature* creature)
-{
-    return new npc_weegli_blastfuseAI (creature);
-}
-
-bool GossipHello_npc_weegli_blastfuse(Player* player, Creature* creature)
-{
-    //event not implemented yet, this is only placeholder for future developement
-    /*if (instance->GetData(0) == DONE)
-    {
-        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_WEEGLI, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
-        player->SEND_GOSSIP_MENU(1514, creature->GetGUID());//if event can proceed to end
-    }
-    else if (instance->GetData(0) == IN_PROGRESS)
-        player->SEND_GOSSIP_MENU(1513, creature->GetGUID());//if event are in progress
-    else*/
-    player->SEND_GOSSIP_MENU(1511, creature->GetGUID());   //if event not started
-    return true;
-}
-
-bool GossipSelect_npc_weegli_blastfuse(Player* player, Creature* /*creature*/, uint32 /*uiSender*/, uint32 uiAction)
-{
-    if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
-    {
-        player->CLOSE_GOSSIP_MENU();
-        //here we make him run to door, set the charge and run away off to nowhere
-    }
-    return true;
-}
 
 /*######
 ## go_shallow_grave
 ######*/
 
-enum {
-    ZOMBIE = 7286,
-    DEAD_HERO = 7276,
-    ZOMBIE_CHANCE = 65,
+enum
+{
+    ZOMBIE           = 7286,
+    DEAD_HERO        = 7276,
+    ZOMBIE_CHANCE    = 65,
     DEAD_HERO_CHANCE = 10
 };
 
-bool GOHello_go_shallow_grave(Player* /*player*/, GameObject* pGo)
+class go_shallow_grave : public GameObjectScript
 {
-    // randomly summon a zombie or dead hero the first time a grave is used
-    if (pGo->GetUseCount() == 0)
+public:
+    go_shallow_grave() : GameObjectScript("go_shallow_grave") { }
+
+    bool OnGossipHello(Player* /*player*/, GameObject* go)
     {
-        uint32 randomchance = urand(0, 100);
-        if (randomchance < ZOMBIE_CHANCE)
-            pGo->SummonCreature(ZOMBIE, pGo->GetPositionX(), pGo->GetPositionY(), pGo->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
-        else if ((randomchance-ZOMBIE_CHANCE) < DEAD_HERO_CHANCE)
-            pGo->SummonCreature(DEAD_HERO, pGo->GetPositionX(), pGo->GetPositionY(), pGo->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
+        // randomly summon a zombie or dead hero the first time a grave is used
+        if (go->GetUseCount() == 0)
+        {
+            uint32 randomchance = urand(0, 100);
+            if (randomchance < ZOMBIE_CHANCE)
+                go->SummonCreature(ZOMBIE, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
+            else
+                if ((randomchance - ZOMBIE_CHANCE) < DEAD_HERO_CHANCE)
+                    go->SummonCreature(DEAD_HERO, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 30000);
+        }
+        go->AddUse();
+        return false;
     }
-    pGo->AddUse();
-    return false;
-}
+};
 
 /*######
 ## at_zumrah
 ######*/
 
-enum {
+enum zumrahConsts
+{
     ZUMRAH_ID = 7271,
     ZUMRAH_HOSTILE_FACTION = 37
 };
 
-bool AreaTrigger_at_zumrah(Player* player, const AreaTriggerEntry * /*at*/)
+class at_zumrah : public AreaTriggerScript
 {
-    Creature* Zumrah = player->FindNearestCreature(ZUMRAH_ID, 30.0f);
+public:
+    at_zumrah() : AreaTriggerScript("at_zumrah") { }
 
-    if (!Zumrah)
-        return false;
+    bool OnTrigger(Player* player, const AreaTriggerEntry* /*at*/)
+    {
+        Creature* pZumrah = player->FindNearestCreature(ZUMRAH_ID, 30.0f);
 
-    Zumrah->setFaction(ZUMRAH_HOSTILE_FACTION);
-    Zumrah->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
-    return true;
-}
+        if (!pZumrah)
+            return false;
+
+        pZumrah->setFaction(ZUMRAH_HOSTILE_FACTION);
+        return true;
+    }
+};
 
 void AddSC_zulfarrak()
 {
-    Script *newscript;
-
-    newscript = new Script;
-    newscript->Name = "npc_sergeant_bly";
-    newscript->GetAI = &GetAI_npc_sergeant_bly;
-    newscript->pGossipHello =  &GossipHello_npc_sergeant_bly;
-    newscript->pGossipSelect = &GossipSelect_npc_sergeant_bly;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "npc_weegli_blastfuse";
-    newscript->GetAI = &GetAI_npc_weegli_blastfuse;
-    newscript->pGossipHello =  &GossipHello_npc_weegli_blastfuse;
-    newscript->pGossipSelect = &GossipSelect_npc_weegli_blastfuse;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "go_shallow_grave";
-    newscript->pGOHello = &GOHello_go_shallow_grave;
-    newscript->RegisterSelf();
-
-    newscript = new Script;
-    newscript->Name = "at_zumrah";
-    newscript->pAreaTrigger = &AreaTrigger_at_zumrah;
-    newscript->RegisterSelf();
+    new npc_sergeant_bly();
+    new npc_weegli_blastfuse();
+    new go_shallow_grave();
+    new at_zumrah();
+    new go_troll_cage();
 }

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,65 +31,67 @@ EndScriptData */
 #define SPELL_LUCIFRONCURSE 19703
 #define SPELL_SHADOWSHOCK   20603
 
-struct boss_lucifronAI : public ScriptedAI
+class boss_lucifron : public CreatureScript
 {
-    boss_lucifronAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_lucifron() : CreatureScript("boss_lucifron") { }
 
-    uint32 ImpendingDoom_Timer;
-    uint32 LucifronCurse_Timer;
-    uint32 ShadowShock_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        ImpendingDoom_Timer = 10000;                        //Initial cast after 10 seconds so the debuffs alternate
-        LucifronCurse_Timer = 20000;                        //Initial cast after 20 seconds
-        ShadowShock_Timer = 6000;                           //6 seconds
+        return new boss_lucifronAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_lucifronAI : public ScriptedAI
     {
-    }
+        boss_lucifronAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
+        uint32 ImpendingDoom_Timer;
+        uint32 LucifronCurse_Timer;
+        uint32 ShadowShock_Timer;
 
-        //Impending doom timer
-        if (ImpendingDoom_Timer <= diff)
+        void Reset()
         {
-            DoCast(me->getVictim(), SPELL_IMPENDINGDOOM);
-            ImpendingDoom_Timer = 20000;
-        } else ImpendingDoom_Timer -= diff;
+            ImpendingDoom_Timer = 10000;                        //Initial cast after 10 seconds so the debuffs alternate
+            LucifronCurse_Timer = 20000;                        //Initial cast after 20 seconds
+            ShadowShock_Timer = 6000;                           //6 seconds
+        }
 
-        //Lucifron's curse timer
-        if (LucifronCurse_Timer <= diff)
+        void EnterCombat(Unit * /*who*/)
         {
-            DoCast(me->getVictim(), SPELL_LUCIFRONCURSE);
-            LucifronCurse_Timer = 15000;
-        } else LucifronCurse_Timer -= diff;
+        }
 
-        //Shadowshock
-        if (ShadowShock_Timer <= diff)
+        void UpdateAI(const uint32 diff)
         {
-            DoCast(me->getVictim(), SPELL_SHADOWSHOCK);
-            ShadowShock_Timer = 6000;
-        } else ShadowShock_Timer -= diff;
+            if (!UpdateVictim())
+                return;
 
-        DoMeleeAttackIfReady();
-    }
+            //Impending doom timer
+            if (ImpendingDoom_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_IMPENDINGDOOM);
+                ImpendingDoom_Timer = 20000;
+            } else ImpendingDoom_Timer -= diff;
+
+            //Lucifron's curse timer
+            if (LucifronCurse_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_LUCIFRONCURSE);
+                LucifronCurse_Timer = 15000;
+            } else LucifronCurse_Timer -= diff;
+
+            //Shadowshock
+            if (ShadowShock_Timer <= diff)
+            {
+                DoCast(me->getVictim(), SPELL_SHADOWSHOCK);
+                ShadowShock_Timer = 6000;
+            } else ShadowShock_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-CreatureAI* GetAI_boss_lucifron(Creature* creature)
-{
-    return new boss_lucifronAI (creature);
-}
 
 void AddSC_boss_lucifron()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_lucifron";
-    newscript->GetAI = &GetAI_boss_lucifron;
-    newscript->RegisterSelf();
+    new boss_lucifron();
 }
-

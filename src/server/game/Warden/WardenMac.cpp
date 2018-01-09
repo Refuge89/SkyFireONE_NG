@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -61,16 +61,16 @@ void WardenMac::Init(WorldSession *pClient, BigNumber *K)
 
     iCrypto.Init(InputKey);
     oCrypto.Init(OutputKey);
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Server side warden for client %u initializing...", pClient->GetAccountId());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  C->S Key: %s", ByteArrayToHexStr(InputKey, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  S->C Key: %s", ByteArrayToHexStr(OutputKey, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Seed: %s", ByteArrayToHexStr(Seed, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Loading Module...");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Server side warden for client %u initializing...", pClient->GetAccountId());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  C->S Key: %s", ByteArrayToHexStr(InputKey, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  S->C Key: %s", ByteArrayToHexStr(OutputKey, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Seed: %s", ByteArrayToHexStr(Seed, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Loading Module...");
 
     Module = GetModuleForClient(Client);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Module Key: %s", ByteArrayToHexStr(Module->Key, 16).c_str());
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "  Module ID: %s", ByteArrayToHexStr(Module->ID, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Module Key: %s", ByteArrayToHexStr(Module->Key, 16).c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "  Module ID: %s", ByteArrayToHexStr(Module->ID, 16).c_str());
     RequestModule();
 }
 
@@ -97,12 +97,12 @@ ClientWardenModule *WardenMac::GetModuleForClient(WorldSession *session)
 
 void WardenMac::InitializeModule()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Initialize module");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Initialize module");
 }
 
 void WardenMac::RequestHash()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request hash");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request hash");
 
     // Create packet structure
     WardenHashRequest Request;
@@ -160,7 +160,7 @@ void WardenMac::HandleHashResult(ByteBuffer &buff)
         return;
     }
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request hash reply: succeed");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request hash reply: succeed");
 
     // client 7F96EEFDA5B63D20A4DF8E00CBF48304
     //const uint8 client_key[16] = { 0x7F, 0x96, 0xEE, 0xFD, 0xA5, 0xB6, 0x3D, 0x20, 0xA4, 0xDF, 0x8E, 0x00, 0xCB, 0xF4, 0x83, 0x04 };
@@ -182,7 +182,7 @@ void WardenMac::HandleHashResult(ByteBuffer &buff)
 
 void WardenMac::RequestData()
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Request data");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Request data");
 
     ByteBuffer buff;
     buff << uint8(WARDEN_SMSG_CHEAT_CHECKS_REQUEST);
@@ -206,7 +206,7 @@ void WardenMac::RequestData()
 
 void WardenMac::HandleData(ByteBuffer &buff)
 {
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "Handle data");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Handle data");
 
     m_WardenDataSent = false;
     m_WardenKickTimer = 0;

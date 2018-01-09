@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -484,6 +484,23 @@ enum SpellAttributesEx6
     SPELL_ATTR_EX6_UNK29                      = 0x20000000,        // 29 not set in 2.4.3
     SPELL_ATTR_EX6_UNK30                      = 0x40000000,        // 30 not set in 2.4.3
     SPELL_ATTR_EX6_UNK31                      = 0x80000000         // 31 not set in 2.4.3
+};
+
+// Custom values
+enum SpellClickUserTypes
+{
+    SPELL_CLICK_USER_ANY = 0,
+    SPELL_CLICK_USER_FRIEND = 1,
+    SPELL_CLICK_USER_RAID = 2,
+    SPELL_CLICK_USER_PARTY = 3,
+    SPELL_CLICK_USER_MAX = 4,
+};
+
+enum SpellClickCastFlags
+{
+    NPC_CLICK_CAST_CASTER_CLICKER = 0x01,
+    NPC_CLICK_CAST_TARGET_CLICKER = 0x02,
+    NPC_CLICK_CAST_ORIG_CASTER_OWNER = 0x04,
 };
 
 enum SheathTypes
@@ -2164,6 +2181,15 @@ enum EventId
     EVENT_CHARGE            = 1003,
 };
 
+enum XPColorChar
+{
+    XP_RED,
+    XP_ORANGE,
+    XP_YELLOW,
+    XP_GREEN,
+    XP_GRAY
+};
+
 enum ResponseCodes
 {
     RESPONSE_SUCCESS                                       = 0x00,
@@ -2284,6 +2310,22 @@ enum BanReturn
     BAN_NOTFOUND
 };
 
+// indexes of BattlemasterList.dbc
+enum BattlegroundTypeId
+{
+    BATTLEGROUND_TYPE_NONE = 0,
+    BATTLEGROUND_AV = 1,
+    BATTLEGROUND_WS = 2,
+    BATTLEGROUND_AB = 3,
+    BATTLEGROUND_NA = 4,
+    BATTLEGROUND_BE = 5,
+    BATTLEGROUND_AA = 6,
+    BATTLEGROUND_EY = 7,
+    BATTLEGROUND_RL = 8
+};
+#define MAX_BATTLEGROUND_TYPE_ID 9
+
+
 enum MailResponseType
 {
     MAIL_SEND               = 0,
@@ -2311,13 +2353,12 @@ enum MailResponseResult
     MAIL_ERR_MAIL_ATTACHMENT_INVALID   = 19,
 };
 
-enum XPColorChar
+//Groups
+enum RemoveMethod
 {
-    XP_RED,
-    XP_ORANGE,
-    XP_YELLOW,
-    XP_GREEN,
-    XP_GRAY
+    GROUP_REMOVEMETHOD_DEFAULT = 0,
+    GROUP_REMOVEMETHOD_KICK = 1,
+    GROUP_REMOVEMETHOD_LEAVE = 2,
 };
 
 // we need to stick to 1 version or half of the stuff will work for someone

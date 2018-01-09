@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -39,6 +39,7 @@
 #include "ObjectAccessor.h"
 #include "ObjectGuid.h"
 #include "SQLStorage.h"
+#include "Weather.h"
 
 #include <ace/Singleton.h>
 #include <string>
@@ -320,6 +321,19 @@ std::string GetScriptsTableNameByType(ScriptsType type);
 ScriptMapMap* GetScriptsMapByType(ScriptsType type);
 std::string GetScriptCommandName(ScriptCommands command);
 
+struct SpellClickInfo
+{
+    uint32 spellId;
+    uint8 castFlags;
+    SpellClickUserTypes userType;
+
+    // helpers
+    bool IsFitToRequirements(Unit const* clicker, Unit const* clickee) const;
+};
+
+typedef std::multimap<uint32, SpellClickInfo> SpellClickInfoContainer;
+typedef std::pair<SpellClickInfoContainer::const_iterator, SpellClickInfoContainer::const_iterator> SpellClickInfoMapBounds;
+
 struct AreaTrigger
 {
     uint32 access_id;
@@ -430,19 +444,6 @@ struct PetCreateSpellEntry
     uint32 spellid[4];
 };
 
-#define WEATHER_SEASONS 4
-struct WeatherSeasonChances
-{
-    uint32 rainChance;
-    uint32 snowChance;
-    uint32 stormChance;
-};
-
-struct WeatherZoneChances
-{
-    WeatherSeasonChances data[WEATHER_SEASONS];
-};
-
 struct GraveYardData
 {
     uint32 safeLocId;
@@ -548,18 +549,20 @@ class ObjectMgr
 
         typedef UNORDERED_MAP<uint32, ReputationOnKillEntry> RepOnKillMap;
 
-        typedef UNORDERED_MAP<uint32, WeatherZoneChances> WeatherZoneMap;
+        typedef UNORDERED_MAP<uint32, WeatherData> WeatherZoneMap;
 
         typedef UNORDERED_MAP<uint32, PetCreateSpellEntry> PetCreateSpellMap;
 
         typedef std::vector<std::string> ScriptNameMap;
 
+        typedef std::vector<std::string> ScriptNameContainer;
+
         UNORDERED_MAP<uint32, uint32> TransportEventMap;
 
-        static GameObjectInfo const *GetGameObjectInfo(uint32 id) { return sGOStorage.LookupEntry<GameObjectInfo>(id); }
+        static GameObjectTemplate const *GetGameObjectInfo(uint32 id) { return sGOStorage.LookupEntry<GameObjectTemplate>(id); }
 
-        void LoadGameobjectInfo();
-        void AddGameobjectInfo(GameObjectInfo *goinfo);
+        void LoadGameObjectTemplate();
+        void AddGameobjectInfo(GameObjectTemplate* goinfo);   
 
         Group * GetGroupByLeader(const uint64 &guid) const;
         void AddGroup(Group* group) { mGroupSet.insert(group); }
@@ -735,9 +738,15 @@ class ObjectMgr
 
         void LoadTransportEvents();
 
-        bool LoadSkyFireStrings(DatabaseType& db, char const* table, int32 min_value, int32 max_value);
-        bool LoadSkyFireStrings() { return LoadSkyFireStrings(WorldDatabase, "skyfire_string", MIN_SKYFIRE_STRING_ID, MAX_SKYFIRE_STRING_ID); }
-    void LoadDbScriptStrings();
+        SkyFireStringLocale const* GetSkyFireStringLocale(int32 entry) const
+        {
+            SkyFireStringLocaleMap::const_iterator itr = mSkyFireStringLocaleMap.find(entry);
+            if (itr == mSkyFireStringLocaleMap.end()) return NULL;
+            return &itr->second;
+        }
+        bool LoadSkyFireStrings(char const* table, int32 min_value, int32 max_value);
+        bool LoadSkyFireStrings() { return LoadSkyFireStrings("skyfire_string", MIN_SKYFIRE_STRING_ID, MAX_SKYFIRE_STRING_ID); }
+        void LoadDbScriptStrings();
         void LoadPetCreateSpells();
         void LoadCreatureLocales();
         void LoadCreatureTemplates();
@@ -795,7 +804,8 @@ class ObjectMgr
         void LoadTrainerSpell();
 
         std::string GeneratePetName(uint32 entry);
-        uint32 GetBaseXP(uint32 level);
+        uint32 GetBaseXP(uint8 level);
+        uint32 GetXPForLevel(uint8 level) const;
 
         int32 GetFishingBaseSkillLevel(uint32 entry) const
         {
@@ -827,7 +837,7 @@ class ObjectMgr
         typedef std::multimap<int32, uint32> ExclusiveQuestGroups;
         ExclusiveQuestGroups mExclusiveQuestGroups;
 
-        WeatherZoneChances const* GetWeatherChances(uint32 zone_id) const
+        WeatherData const* GetWeatherChances(uint32 zone_id) const
         {
             WeatherZoneMap::const_iterator itr = mWeatherZoneMap.find(zone_id);
             if (itr != mWeatherZoneMap.end())
@@ -907,12 +917,10 @@ class ObjectMgr
         GameObjectData& NewGOData(uint32 guid) { return mGameObjectDataMap[guid]; }
         void DeleteGOData(uint32 guid);
 
-        SkyFireStringLocale const* GetSkyFireStringLocale(int32 entry) const
-        {
-            SkyFireStringLocaleMap::const_iterator itr = mSkyFireStringLocaleMap.find(entry);
-            if (itr == mSkyFireStringLocaleMap.end()) return NULL;
-            return &itr->second;
-        }
+        GameObjectTemplate const* GetGameObjectTemplate(uint32 entry);
+        GameObjectTemplateContainer const* GetGameObjectTemplate() const { return &_gameObjectTemplateStore; }
+        int LoadReferenceVendor(int32 vendor, int32 item_id, std::set<uint32> *skip_vendors);
+     
         const char *GetSkyFireString(int32 entry, int locale_idx) const;
         const char *GetSkyFireStringForDBCLocale(int32 entry) const { return GetSkyFireString(entry, DBCLocaleIndex); }
         int32 GetDBCLocaleIndex() const { return DBCLocaleIndex; }
@@ -932,7 +940,7 @@ class ObjectMgr
         void RemoveCreatureFromGrid(uint32 guid, CreatureData const* data);
         void AddGameobjectToGrid(uint32 guid, GameObjectData const* data);
         void RemoveGameobjectFromGrid(uint32 guid, GameObjectData const* data);
-        uint32 AddGOData(uint32 entry, uint32 artKit, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0, float rotation0 = 0, float rotation1 = 0, float rotation2 = 0, float rotation3 = 0);
+        uint32 AddGOData(uint32 entry, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0, float rotation0 = 0, float rotation1 = 0, float rotation2 = 0, float rotation3 = 0);
         uint32 AddCreData(uint32 entry, uint32 team, uint32 map, float x, float y, float z, float o, uint32 spawntimedelay = 0);
 
         // reserved names
@@ -1010,8 +1018,8 @@ class ObjectMgr
         bool IsVendorItemValid(uint32 vendor_entry, uint32 item, uint32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL, uint32 ORnpcflag = 0) const;
 
         void LoadScriptNames();
-        ScriptNameMap &GetScriptNames() { return m_scriptNames; }
-        const char * GetScriptName(uint32 id) { return id < m_scriptNames.size() ? m_scriptNames[id].c_str() : ""; }
+        ScriptNameContainer &GetScriptNames() { return _scriptNamesStore; }
+        const char * GetScriptName(uint32 id) { return id < _scriptNamesStore.size() ? _scriptNamesStore[id].c_str() : ""; }
         uint32 GetScriptId(const char *name);
 
         GossipMenusMapBounds GetGossipMenusMapBounds(uint32 uiMenuId) const
@@ -1024,8 +1032,13 @@ class ObjectMgr
             return GossipMenuItemsMapBounds(m_mGossipMenuItemsMap.lower_bound(uiMenuId), m_mGossipMenuItemsMap.upper_bound(uiMenuId));
         }
 
+        static void AddLocaleString(const std::string& s, LocaleConstant locale, StringVector& data);
+        static inline void GetLocaleString(const StringVector& data, int loc_idx, std::string& value)
+        {
+            if (data.size() > size_t(loc_idx) && !data[loc_idx].empty())
+                value = data[loc_idx];
+        }
     protected:
-
         // first free id for selected id type
         uint32 m_auctionid;
         uint32 m_mailid;
@@ -1051,7 +1064,9 @@ class ObjectMgr
         typedef UNORDERED_MAP<uint32, std::string> ItemTextMap;
         typedef std::set<uint32> TavernAreaTriggerSet;
         typedef std::set<uint32> GameObjectForQuestSet;
+        typedef std::vector<std::string> ScriptNameContainer;
 
+        GameObjectTemplateContainer _gameObjectTemplateStore;
         GroupSet            mGroupSet;
         GuildMap            mGuildMap;
         ArenaTeamMap        mArenaTeamMap;
@@ -1090,7 +1105,9 @@ class ObjectMgr
 
         GameTeleMap         m_GameTeleMap;
 
-        ScriptNameMap       m_scriptNames;
+        ScriptNameContainer       _scriptNamesStore;
+
+        SpellClickInfoContainer   _spellClickInfoStore;
 
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;
@@ -1113,8 +1130,11 @@ class ObjectMgr
         void BuildPlayerLevelInfo(uint8 race, uint8 class_, uint8 level, PlayerLevelInfo* plinfo) const;
         PlayerInfo playerInfo[MAX_RACES][MAX_CLASSES];
 
-        typedef std::map<uint32, uint32> BaseXPMap;          // [area level][base xp]
-        BaseXPMap mBaseXPTable;
+        typedef std::vector<uint32> PlayerXPperLevel;       // [level]
+        PlayerXPperLevel _playerXPperLevel;
+
+        typedef std::map<uint32, uint32> BaseXPContainer;          // [area level][base xp]
+        BaseXPContainer _baseXPTable;
 
         typedef std::map<uint32, int32> FishingBaseSkillMap; // [areaId][base skill level]
         FishingBaseSkillMap mFishingBaseForArea;
@@ -1153,11 +1173,11 @@ class ObjectMgr
 #define sObjectMgr ACE_Singleton<ObjectMgr, ACE_Null_Mutex>::instance()
 
 // scripting access functions
-bool LoadSkyFireStrings(DatabaseType& db, char const* table, int32 start_value = MAX_CREATURE_AI_TEXT_STRING_ID, int32 end_value = std::numeric_limits<int32>::min());
+bool LoadSkyFireStrings(char const* table, int32 start_value = MAX_CREATURE_AI_TEXT_STRING_ID, int32 end_value = std::numeric_limits<int32>::min());
 uint32 GetAreaTriggerScriptId(uint32 trigger_id);
 uint32 GetScriptId(const char *name);
 ObjectMgr::ScriptNameMap& GetScriptNames();
-GameObjectInfo const *GetGameObjectInfo(uint32 id);
+GameObjectTemplate const *GetGameObjectTemplate(uint32 id);
 CreatureTemplate const* GetCreatureTemplate(uint32 id);
 CreatureTemplate const* GetCreatureTemplateStore(uint32 entry);
 Quest const* GetQuestTemplateStore(uint32 entry);

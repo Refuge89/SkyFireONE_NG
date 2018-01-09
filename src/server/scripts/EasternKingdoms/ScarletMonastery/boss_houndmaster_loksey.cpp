@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2006-2008 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -34,48 +34,49 @@ enum eEnums
     SPELL_BLOODLUST                 = 6742
 };
 
-struct boss_houndmaster_lokseyAI : public ScriptedAI
+class boss_houndmaster_loksey : public CreatureScript
 {
-    boss_houndmaster_lokseyAI(Creature *c) : ScriptedAI(c) {}
+public:
+    boss_houndmaster_loksey() : CreatureScript("boss_houndmaster_loksey") { }
 
-    uint32 BloodLust_Timer;
-
-    void Reset()
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        BloodLust_Timer = 20000;
+        return new boss_houndmaster_lokseyAI (pCreature);
     }
 
-    void EnterCombat(Unit * /*who*/)
+    struct boss_houndmaster_lokseyAI : public ScriptedAI
     {
-        DoScriptText(SAY_AGGRO, me);
-    }
+        boss_houndmaster_lokseyAI(Creature *c) : ScriptedAI(c) {}
 
-    void UpdateAI(const uint32 diff)
-    {
-        if (!UpdateVictim())
-            return;
+        uint32 BloodLust_Timer;
 
-        if (BloodLust_Timer <= diff)
+        void Reset()
         {
-            DoCast(me, SPELL_BLOODLUST);
             BloodLust_Timer = 20000;
-        } else BloodLust_Timer -= diff;
+        }
 
-        DoMeleeAttackIfReady();
-    }
+        void EnterCombat(Unit * /*who*/)
+        {
+            DoScriptText(SAY_AGGRO, me);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!UpdateVictim())
+                return;
+
+            if (BloodLust_Timer <= diff)
+            {
+                DoCast(me, SPELL_BLOODLUST);
+                BloodLust_Timer = 20000;
+            } else BloodLust_Timer -= diff;
+
+            DoMeleeAttackIfReady();
+        }
+    };
 };
-
-CreatureAI* GetAI_boss_houndmaster_loksey(Creature* creature)
-{
-    return new boss_houndmaster_lokseyAI (creature);
-}
 
 void AddSC_boss_houndmaster_loksey()
 {
-    Script *newscript;
-    newscript = new Script;
-    newscript->Name = "boss_houndmaster_loksey";
-    newscript->GetAI = &GetAI_boss_houndmaster_loksey;
-    newscript->RegisterSelf();
+    new boss_houndmaster_loksey();
 }
-

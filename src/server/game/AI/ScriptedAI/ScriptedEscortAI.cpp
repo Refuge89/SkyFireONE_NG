@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -193,7 +193,7 @@ void npc_escortAI::EnterEvadeMode()
     {
         AddEscortState(STATE_ESCORT_RETURNING);
         ReturnToLastPoint();
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI has left combat and is now returning to last point");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI has left combat and is now returning to last point");
     }
     else
     {
@@ -240,7 +240,7 @@ void npc_escortAI::UpdateAI(const uint32 uiDiff)
             {
                 if (DespawnAtEnd)
                 {
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI reached end of waypoints");
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI reached end of waypoints");
 
                     if (m_bCanReturnToStart)
                     {
@@ -251,7 +251,7 @@ void npc_escortAI::UpdateAI(const uint32 uiDiff)
 
                         m_uiWPWaitTimer = 0;
 
-                        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI are returning home to spawn location: %u, %f, %f, %f", POINT_HOME, fRetX, fRetY, fRetZ);
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI are returning home to spawn location: %u, %f, %f, %f", POINT_HOME, fRetX, fRetY, fRetZ);
                         return;
                     }
 
@@ -267,7 +267,7 @@ void npc_escortAI::UpdateAI(const uint32 uiDiff)
                 }
                 else
                 {
-                    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI reached end of waypoints with Despawn off");
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI reached end of waypoints with Despawn off");
 
                     return;
                 }
@@ -276,7 +276,7 @@ void npc_escortAI::UpdateAI(const uint32 uiDiff)
             if (!HasEscortState(STATE_ESCORT_PAUSED))
             {
                 me->GetMotionMaster()->MovePoint(CurrentWP->id, CurrentWP->x, CurrentWP->y, CurrentWP->z);
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI start waypoint %u (%f, %f, %f).", CurrentWP->id, CurrentWP->x, CurrentWP->y, CurrentWP->z);
+                sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI start waypoint %u (%f, %f, %f).", CurrentWP->id, CurrentWP->x, CurrentWP->y, CurrentWP->z);
 
                 WaypointStart(CurrentWP->id);
 
@@ -294,7 +294,7 @@ void npc_escortAI::UpdateAI(const uint32 uiDiff)
         {
             if (DespawnAtFar && !IsPlayerOrGroupInRange())
             {
-                sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI failed because player/group was to far away or not found");
+                sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI failed because player/group was to far away or not found");
 
                 if (m_bCanInstantRespawn)
                 {
@@ -332,7 +332,7 @@ void npc_escortAI::MovementInform(uint32 uiMoveType, uint32 uiPointId)
     //Combat start position reached, continue waypoint movement
     if (uiPointId == POINT_LAST_POINT)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI has returned to original position before combat");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI has returned to original position before combat");
 
         if (m_bIsRunning && me->HasUnitMovementFlag(MOVEFLAG_WALK_MODE))
             me->RemoveUnitMovementFlag(MOVEFLAG_WALK_MODE);
@@ -346,7 +346,7 @@ void npc_escortAI::MovementInform(uint32 uiMoveType, uint32 uiPointId)
     }
     else if (uiPointId == POINT_HOME)
     {
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI has returned to original home location and will continue from beginning of waypoint list.");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI has returned to original home location and will continue from beginning of waypoint list.");
 
         CurrentWP = WaypointList.begin();
         m_uiWPWaitTimer = 1;
@@ -360,7 +360,7 @@ void npc_escortAI::MovementInform(uint32 uiMoveType, uint32 uiPointId)
             return;
         }
 
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI Waypoint %u reached", CurrentWP->id);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI Waypoint %u reached", CurrentWP->id);
 
         //Call WP function
         WaypointReached(CurrentWP->id);
@@ -410,17 +410,15 @@ void npc_escortAI::AddWaypoint(uint32 id, float x, float y, float z, uint32 Wait
 
 void npc_escortAI::FillPointMovementListForCreature()
 {
-    std::vector<ScriptPointMove> const &pPointsEntries = pSystemMgr.GetPointMoveList(me->GetEntry());
-
-    if (pPointsEntries.empty())
+    ScriptPointVector const& movePoints = sScriptSystemMgr->GetPointMoveList(me->GetEntry());
+    if (movePoints.empty())
         return;
 
-    std::vector<ScriptPointMove>::const_iterator itr;
-
-    for (itr = pPointsEntries.begin(); itr != pPointsEntries.end(); ++itr)
+    ScriptPointVector::const_iterator itrEnd = movePoints.end();;
+    for (ScriptPointVector::const_iterator itr = movePoints.begin(); itr != itrEnd; ++itr)
     {
-        Escort_Waypoint pPoint(itr->uiPointId, itr->fX, itr->fY, itr->fZ, itr->uiWaitTime);
-        WaypointList.push_back(pPoint);
+        Escort_Waypoint point(itr->uiPointId, itr->fX, itr->fY, itr->fZ, itr->uiWaitTime);
+        WaypointList.push_back(point);
     }
 }
 
@@ -431,14 +429,14 @@ void npc_escortAI::SetRun(bool bRun)
         if (!m_bIsRunning)
             me->RemoveUnitMovementFlag(MOVEFLAG_WALK_MODE);
         else
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI attempt to set run mode, but is already running.");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI attempt to set run mode, but is already running.");
     }
     else
     {
         if (m_bIsRunning)
             me->AddUnitMovementFlag(MOVEFLAG_WALK_MODE);
         else
-            sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI attempt to set walk mode, but is already walking.");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI attempt to set walk mode, but is already walking.");
     }
     m_bIsRunning = bRun;
 }
@@ -483,19 +481,19 @@ void npc_escortAI::Start(bool bIsActiveAttacker, bool bRun, uint64 uiPlayerGUID,
     m_bCanReturnToStart = bCanLoopPath;
 
     if (m_bCanReturnToStart && m_bCanInstantRespawn)
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI is set to return home after waypoint end and instant respawn at waypoint end. Creature will never despawn.");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI is set to return home after waypoint end and instant respawn at waypoint end. Creature will never despawn.");
 
     if (me->GetMotionMaster()->GetCurrentMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
     {
         me->GetMotionMaster()->MovementExpired();
         me->GetMotionMaster()->MoveIdle();
-        sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI start with WAYPOINT_MOTION_TYPE, changed to MoveIdle.");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI start with WAYPOINT_MOTION_TYPE, changed to MoveIdle.");
     }
 
     //disable npcflags
     me->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
-    sLog->outDebug (LOG_FILTER_NETWORKIO, "TSCR: EscortAI started with %u waypoints. ActiveAttacker = %d, Run = %d, PlayerGUID = %u", WaypointList.size(), m_bIsActiveAttacker, m_bIsRunning, m_uiPlayerGUID);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, " TSCR: EscortAI started with %u waypoints. ActiveAttacker = %d, Run = %d, PlayerGUID = %u", WaypointList.size(), m_bIsActiveAttacker, m_bIsRunning, m_uiPlayerGUID);
 
     CurrentWP = WaypointList.begin();
 

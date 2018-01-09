@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2010-2013 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2010-2013 Oregon <http://www.oregoncore.com/>
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2013 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2011-2017 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2010-2017 Oregon <http://www.oregoncore.com/>
+ * Copyright (C) 2005-2017 MaNGOS <https://www.getmangos.eu/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
+ * Free Software Foundation; either version 3 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -864,12 +864,12 @@ enum SkyFireStrings
     LANG_OPVP_HP_CAPTURE_STADIUM_A      = 10004,
     LANG_OPVP_HP_CAPTURE_BROKENHILL_H   = 10005,
     LANG_OPVP_HP_CAPTURE_BROKENHILL_A   = 10006,
-    LANG_OPVP_HP_LOOSE_OVERLOOK_H       = 10007,
-    LANG_OPVP_HP_LOOSE_OVERLOOK_A       = 10008,
-    LANG_OPVP_HP_LOOSE_STADIUM_H        = 10009,
-    LANG_OPVP_HP_LOOSE_STADIUM_A        = 10010,
-    LANG_OPVP_HP_LOOSE_BROKENHILL_H     = 10011,
-    LANG_OPVP_HP_LOOSE_BROKENHILL_A     = 10012,
+    LANG_OPVP_HP_LOSE_OVERLOOK_H       = 10007,
+    LANG_OPVP_HP_LOSE_OVERLOOK_A       = 10008,
+    LANG_OPVP_HP_LOSE_STADIUM_H        = 10009,
+    LANG_OPVP_HP_LOSE_STADIUM_A        = 10010,
+    LANG_OPVP_HP_LOSE_BROKENHILL_H     = 10011,
+    LANG_OPVP_HP_LOSE_BROKENHILL_A     = 10012,
     // opvp zm
     LANG_OPVP_ZM_CAPTURE_WEST_H         = 10013,
     LANG_OPVP_ZM_CAPTURE_WEST_A         = 10014,
@@ -877,39 +877,39 @@ enum SkyFireStrings
     LANG_OPVP_ZM_CAPTURE_EAST_A         = 10016,
     LANG_OPVP_ZM_CAPTURE_GY_H           = 10017,
     LANG_OPVP_ZM_CAPTURE_GY_A           = 10018,
-    LANG_OPVP_ZM_LOOSE_WEST_H           = 10019,
-    LANG_OPVP_ZM_LOOSE_WEST_A           = 10020,
-    LANG_OPVP_ZM_LOOSE_EAST_H           = 10021,
-    LANG_OPVP_ZM_LOOSE_EAST_A           = 10022,
-    LANG_OPVP_ZM_LOOSE_GY_H             = 10023,
-    LANG_OPVP_ZM_LOOSE_GY_A             = 10024,
+    LANG_OPVP_ZM_LOSE_WEST_H            = 10019,
+    LANG_OPVP_ZM_LOSE_WEST_A            = 10020,
+    LANG_OPVP_ZM_LOSE_EAST_H            = 10021,
+    LANG_OPVP_ZM_LOSE_EAST_A            = 10022,
+    LANG_OPVP_ZM_LOSE_GY_H              = 10023,
+    LANG_OPVP_ZM_LOSE_GY_A              = 10024,
     // opvp na
     LANG_OPVP_NA_CAPTURE_H              = 10025,
     LANG_OPVP_NA_CAPTURE_A              = 10026,
-    LANG_OPVP_NA_LOOSE_H                = 10027,
-    LANG_OPVP_NA_LOOSE_A                = 10028,
+    LANG_OPVP_NA_LOSE_H                 = 10027,
+    LANG_OPVP_NA_LOSE_A                 = 10028,
     // opvp tf
     LANG_OPVP_TF_CAPTURE_H              = 10029,
     LANG_OPVP_TF_CAPTURE_A              = 10030,
-    LANG_OPVP_TF_LOOSE_H                = 10031,
-    LANG_OPVP_TF_LOOSE_A                = 10032,
+    LANG_OPVP_TF_LOSE_H                 = 10031,
+    LANG_OPVP_TF_LOSE_A                 = 10032,
     // opvp ep
-    LANG_OPVP_EP_CAPTURE_NORTHPASS_H    = 10033,
-    LANG_OPVP_EP_CAPTURE_NORTHPASS_A    = 10034,
-    LANG_OPVP_EP_CAPTURE_EASTWALL_H     = 10035,
-    LANG_OPVP_EP_CAPTURE_EASTWALL_A     = 10036,
-    LANG_OPVP_EP_CAPTURE_CROWNGUARD_H   = 10037,
-    LANG_OPVP_EP_CAPTURE_CROWNGUARD_A   = 10038,
-    LANG_OPVP_EP_CAPTURE_PLAGUEWOOD_H   = 10039,
-    LANG_OPVP_EP_CAPTURE_PLAGUEWOOD_A   = 10040,
-    LANG_OPVP_EP_LOOSE_NORTHPASS_H      = 10041,
-    LANG_OPVP_EP_LOOSE_NORTHPASS_A      = 10042,
-    LANG_OPVP_EP_LOOSE_EASTWALL_H       = 10043,
-    LANG_OPVP_EP_LOOSE_EASTWALL_A       = 10044,
-    LANG_OPVP_EP_LOOSE_CROWNGUARD_H     = 10045,
-    LANG_OPVP_EP_LOOSE_CROWNGUARD_A     = 10046,
-    LANG_OPVP_EP_LOOSE_PLAGUEWOOD_H     = 10047,
-    LANG_OPVP_EP_LOOSE_PLAGUEWOOD_A     = 10048,
+    LANG_OPVP_EP_CAPTURE_NPT_H          = 10033,
+    LANG_OPVP_EP_CAPTURE_NPT_A          = 10034,
+    LANG_OPVP_EP_CAPTURE_EWT_H          = 10035,
+    LANG_OPVP_EP_CAPTURE_EWT_A          = 10036,
+    LANG_OPVP_EP_CAPTURE_CGT_H          = 10037,
+    LANG_OPVP_EP_CAPTURE_CGT_A          = 10038,
+    LANG_OPVP_EP_CAPTURE_PWT_H          = 10039,
+    LANG_OPVP_EP_CAPTURE_PWT_A          = 10040,
+    LANG_OPVP_EP_LOSE_NPT_H             = 10041,
+    LANG_OPVP_EP_LOSE_NPT_A             = 10042,
+    LANG_OPVP_EP_LOSE_EWT_H             = 10043,
+    LANG_OPVP_EP_LOSE_EWT_A             = 10044,
+    LANG_OPVP_EP_LOSE_CGT_H             = 10045,
+    LANG_OPVP_EP_LOSE_CGT_A             = 10046,
+    LANG_OPVP_EP_LOSE_PWT_H             = 10047,
+    LANG_OPVP_EP_LOSE_PWT_A             = 10048,
     // opvp si
     LANG_OPVP_SI_CAPTURE_H              = 10049,
     LANG_OPVP_SI_CAPTURE_A              = 10050,
