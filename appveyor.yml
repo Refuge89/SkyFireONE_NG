@@ -61,3 +61,5 @@ build_script:
   
 # MSBuild verbosity level (quiet|minimal|normal|detailed)
   - verbosity: normal
+
+ 
