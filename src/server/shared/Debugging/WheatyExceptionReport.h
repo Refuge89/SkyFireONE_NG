@@ -87,7 +87,7 @@ const char* const rgBaseType[] =
     " <complex> ",                                         // btComplex = 28,
     " <bit> ",                                             // btBit = 29,
     " BSTR ",                                              // btBSTR = 30,
-    " HRESULT "                                            // btHresult = 31
+    " HRESULT "                                             // btHresult = 31
 };
 
 class WheatyExceptionReport
@@ -140,4 +140,3 @@ class WheatyExceptionReport
 extern WheatyExceptionReport g_WheatyExceptionReport;       //  global instance of class
 #endif                                                      // _WIN32
 #endif                                                      // _WHEATYEXCEPTIONREPORT_
-
